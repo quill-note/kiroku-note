@@ -300,22 +300,14 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .star-half::after { content: '★'; position: absolute; left: 0; top: 0; width: 50%; overflow: hidden; color: #f0b429; }
 .star-half-base { color: #ddd; }
 
-.star-wrap { display:inline-block; cursor:pointer; }
-.star.half { color: #f0b429; opacity: 0.5; }
 
-.star-half-btn, .star-full-btn {
-  font-size: 22px; cursor: pointer; color: #ddd;
-  transition: color 0.1s; user-select: none;
-  line-height: 1;
-}
-.star-half-btn { font-size: 18px; }
 
 .star-btn {
   font-size: 28px; cursor: pointer;
   user-select: none; line-height: 1;
   display: inline-block;
-  -webkit-background-clip: text;
   transition: transform 0.1s;
+  color: #ddd;
 }
 .star-btn:active { transform: scale(0.9); }
 </style>
@@ -430,6 +422,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
         <span class="star-btn" data-idx="3" onclick="onStarTap(event,3)">★</span>
         <span class="star-btn" data-idx="4" onclick="onStarTap(event,4)">★</span>
         <span class="star-btn" data-idx="5" onclick="onStarTap(event,5)">★</span>
+      </div>
       </div>
     </div>
     <div class="form-group">
@@ -753,7 +746,7 @@ function starsHTML(n) {
   let html = '';
   for(let i=1; i<=5; i++){
     if(n >= i) html += '<span class="star filled">★</span>';
-    else if(n >= i-0.5) html += '<span class="star half">★</span>';
+    else if(n >= i-0.5) html += '<span class="star" style="color:#f0b429;opacity:0.4">★</span>';
     else html += '<span class="star">☆</span>';
   }
   return html;
@@ -960,23 +953,14 @@ function renderStarSelect(v) {
   _starTemp = v;
   document.querySelectorAll('#starSelect .star-btn').forEach((btn, i) => {
     const idx = i + 1;
+    btn.removeAttribute('style');
     if(v >= idx) {
-      btn.textContent = '★';
       btn.style.color = '#f0b429';
-      btn.style.background = 'none';
     } else if(v >= idx - 0.5) {
-      // 半星：左半分黄色のグラデーション
-      btn.textContent = '★';
-      btn.style.color = 'transparent';
-      btn.style.background = 'linear-gradient(to right, #f0b429 50%, #ddd 50%)';
-      btn.style.webkitBackgroundClip = 'text';
-      btn.style.webkitTextFillColor = 'transparent';
+      btn.style.color = '#f0b429';
+      btn.style.opacity = '0.4';
     } else {
-      btn.textContent = '★';
       btn.style.color = '#ddd';
-      btn.style.background = 'none';
-      btn.style.webkitBackgroundClip = '';
-      btn.style.webkitTextFillColor = '';
     }
   });
 }
