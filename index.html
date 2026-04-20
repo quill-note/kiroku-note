@@ -1389,40 +1389,37 @@ async function searchBooks(q) {
   candEl.style.display = 'block';
   candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>');
   try {
-    // 1st try: 日本語限定
-    let url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8&langRestrict=ja`;
-    let res = await fetch(url);
-    let data = await res.json();
-    let bookItems = data.items || [];
-    // 2nd try: 制限なし（日本語で見つからない場合）
-    if(!bookItems.length) {
-      url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8`;
-      res = await fetch(url);
-      data = await res.json();
-      bookItems = data.items || [];
-    }
+    const url = `https://api.openbd.jp/v1/search?title=${encodeURIComponent(q)}&limit=8`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const hits = (data.data || []).filter(b => b);
     let apiHTML = '';
-    if(!bookItems.length) {
+    let books = [];
+    if(!hits.length) {
       apiHTML = '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>';
     } else {
-      apiHTML = bookItems.map((item, i) => {
-        const info = item.volumeInfo || {};
-        const title = info.title || '';
-        const authors = (info.authors || []).join(', ');
-        const thumb = info.imageLinks?.thumbnail?.replace('http:','https:') || '';
-        const thumbHTML = thumb
-          ? `<img class="book-cand-thumb" src="${thumb}" alt="" onerror="this.style.display='none'">`
+      books = hits.map(b => {
+        const summary = b.summary || {};
+        const title   = summary.title  || '';
+        const author  = summary.author || '';
+        const isbn    = summary.isbn   || '';
+        const coverUrl = isbn ? `https://cover.openbd.jp/${isbn}.jpg` : '';
+        return { title, author, coverUrl };
+      }).filter(b => b.title);
+      apiHTML = books.map((book, i) => {
+        const thumbHTML = book.coverUrl
+          ? `<img class="book-cand-thumb" src="${book.coverUrl}" alt="" onerror="this.style.display='none'">`
           : `<div class="book-cand-thumb-empty"><span class="mi mi-sm">menu_book</span></div>`;
         return `<div class="book-candidate" onclick="selectBook(${i})">
           ${thumbHTML}
           <div class="book-cand-info">
-            <div class="book-cand-title">${esc(title)}</div>
-            <div class="book-cand-author">${esc(authors)}</div>
+            <div class="book-cand-title">${esc(book.title)}</div>
+            <div class="book-cand-author">${esc(book.author)}</div>
           </div>
         </div>`;
       }).join('');
     }
-    candEl._books = bookItems;
+    candEl._books = books;
     candEl.innerHTML = buildCandidateHTML(q, apiHTML);
   } catch(e) {
     candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました</div>');
@@ -1431,18 +1428,15 @@ async function searchBooks(q) {
 
 function selectBook(i) {
   const candEl = document.getElementById('bookCandidates');
-  const bookItems = candEl._books || [];
-  const item = bookItems[i];
-  if(!item) return;
-  const info = item.volumeInfo || {};
-  document.getElementById('fTitle').value = info.title || '';
-  const authors = (info.authors || []).join(', ');
-  if(authors) document.getElementById('fAuthor').value = authors;
-  const thumb = info.imageLinks?.thumbnail?.replace('http:','https:') || '';
-  _selectedCoverUrl = thumb;
-  if(thumb) {
+  const books = candEl._books || [];
+  const book = books[i];
+  if(!book) return;
+  document.getElementById('fTitle').value = book.title || '';
+  if(book.author) document.getElementById('fAuthor').value = book.author;
+  _selectedCoverUrl = book.coverUrl || '';
+  if(book.coverUrl) {
     document.getElementById('coverPreviewWrap').style.display = 'block';
-    document.getElementById('coverPreviewImg').src = thumb;
+    document.getElementById('coverPreviewImg').src = book.coverUrl;
   } else {
     document.getElementById('coverPreviewWrap').style.display = 'none';
   }
