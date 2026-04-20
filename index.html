@@ -1389,32 +1389,40 @@ async function searchBooks(q) {
   candEl.style.display = 'block';
   candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>');
   try {
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8&langRestrict=ja`;
+    const url = `https://iss.ndl.go.jp/api/opensearch?title=${encodeURIComponent(q)}&cnt=8&mediatype=1`;
     const res = await fetch(url);
-    const data = await res.json();
-    const bookItems = data.items || [];
+    const text = await res.text();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, 'text/xml');
+    const xmlItems = [...xml.querySelectorAll('item')];
     let apiHTML = '';
-    if(!bookItems.length) {
+    let books = [];
+    if(!xmlItems.length) {
       apiHTML = '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>';
     } else {
-      apiHTML = bookItems.map((item, i) => {
-        const info = item.volumeInfo || {};
-        const title = info.title || '';
-        const authors = (info.authors || []).join(', ');
-        const thumb = info.imageLinks?.thumbnail?.replace('http:','https:') || '';
-        const thumbHTML = thumb
-          ? `<img class="book-cand-thumb" src="${thumb}" alt="" onerror="this.style.display='none'">`
+      books = xmlItems.slice(0, 8).map(item => {
+        const title = item.querySelector('title')?.textContent || '';
+        const creatorEl = item.getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'creator')[0];
+        const author = creatorEl?.textContent || '';
+        const idEls = [...item.getElementsByTagNameNS('http://purl.org/dc/elements/1.1/', 'identifier')];
+        const isbn = idEls.map(e => e.textContent).find(v => /^978/.test(v)) || '';
+        const coverUrl = isbn ? `https://cover.openbd.jp/${isbn}.jpg` : '';
+        return { title, author, coverUrl };
+      }).filter(b => b.title);
+      apiHTML = books.map((book, i) => {
+        const thumbHTML = book.coverUrl
+          ? `<img class="book-cand-thumb" src="${book.coverUrl}" alt="" onerror="this.style.display='none'">`
           : `<div class="book-cand-thumb-empty"><span class="mi mi-sm">menu_book</span></div>`;
         return `<div class="book-candidate" onclick="selectBook(${i})">
           ${thumbHTML}
           <div class="book-cand-info">
-            <div class="book-cand-title">${esc(title)}</div>
-            <div class="book-cand-author">${esc(authors)}</div>
+            <div class="book-cand-title">${esc(book.title)}</div>
+            <div class="book-cand-author">${esc(book.author)}</div>
           </div>
         </div>`;
       }).join('');
     }
-    candEl._books = bookItems;
+    candEl._books = books;
     candEl.innerHTML = buildCandidateHTML(q, apiHTML);
   } catch(e) {
     candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました</div>');
@@ -1423,18 +1431,15 @@ async function searchBooks(q) {
 
 function selectBook(i) {
   const candEl = document.getElementById('bookCandidates');
-  const bookItems = candEl._books || [];
-  const item = bookItems[i];
-  if(!item) return;
-  const info = item.volumeInfo || {};
-  document.getElementById('fTitle').value = info.title || '';
-  const authors = (info.authors || []).join(', ');
-  if(authors) document.getElementById('fAuthor').value = authors;
-  const thumb = info.imageLinks?.thumbnail?.replace('http:','https:') || '';
-  _selectedCoverUrl = thumb;
-  if(thumb) {
+  const books = candEl._books || [];
+  const book = books[i];
+  if(!book) return;
+  document.getElementById('fTitle').value = book.title || '';
+  if(book.author) document.getElementById('fAuthor').value = book.author;
+  _selectedCoverUrl = book.coverUrl || '';
+  if(book.coverUrl) {
     document.getElementById('coverPreviewWrap').style.display = 'block';
-    document.getElementById('coverPreviewImg').src = thumb;
+    document.getElementById('coverPreviewImg').src = book.coverUrl;
   } else {
     document.getElementById('coverPreviewWrap').style.display = 'none';
   }
@@ -1600,15 +1605,13 @@ async function init() {
       localStorage.setItem(STORE_KEY, JSON.stringify(items));
     }
   }
-  // それでも空ならGistから自動復元を試みる
+  // それでも空ならGistから自動復元を試みる（サイレント）
   if(!items.length && getGistToken()) {
-    showToast('クラウドから復元中…', 'cloud_download');
     const gistData = await loadFromGist();
     if(gistData && gistData.length) {
       items = gistData;
       localStorage.setItem(STORE_KEY, JSON.stringify(items));
       await saveToIDB(items);
-      showToast('クラウドから復元しました', 'check_circle');
     }
   }
   render();
