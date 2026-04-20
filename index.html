@@ -1309,14 +1309,18 @@ function selectBook(i) {
   candEl.style.display = 'none';
 }
 
-// 候補以外をタップで閉じる
+// 候補以外をタップで閉じる（モーダル外のみ）
 document.addEventListener('click', e => {
-  const input = document.getElementById('fTitle');
   const cand = document.getElementById('bookCandidates');
-  if(!input || !cand) return;
-  // fTitleまたはbookCandidates内のクリックでなければ閉じる
-  const searchWrap = document.getElementById('bookSearchWrap') || input?.parentElement?.parentElement;
-  if(!input.contains(e.target) && !cand.contains(e.target) && !(searchWrap && searchWrap.contains(e.target))) {
+  if(!cand || cand.style.display === 'none') return;
+  // モーダル内はeditModalを基準に判定
+  const modal = document.getElementById('editModal');
+  const input = document.getElementById('fTitle');
+  // bookCandidates自体か、タイトル入力欄か、モーダル外ならOK
+  if(cand.contains(e.target)) return; // 候補内タップは閉じない
+  if(input && input === e.target) return; // input自体タップは閉じない
+  // モーダル外のクリックのみ閉じる
+  if(modal && !modal.contains(e.target)) {
     cand.style.display = 'none';
   }
 });
