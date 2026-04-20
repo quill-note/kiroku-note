@@ -15,405 +15,185 @@
 <link href="https://fonts.googleapis.com/css2?family=Hiragino+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 <style>
-:root {
-  --primary: #e87b6b;
-  --primary-dark: #c9584a;
-  --primary-light: #f5a99e;
-  --primary-pale: #fdf0ee;
-  --secondary: #d4778b;
-  --bg: #fef8f7;
-  --surface: #ffffff;
-  --surface2: #fdf3f2;
-  --border: #f0d5d1;
-  --text: #4a2525;
-  --text2: #7a4545;
-  --text3: #aa7777;
-  --tag-bg: #fce8e5;
-  --tag-text: #c4474a;
-  --shadow: rgba(232,123,107,0.15);
-  --success: #4a9e6e;
-  --warn: #c48a2a;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-}
-.mi { font-family: 'Material Icons Round'; font-style: normal; font-size: 20px; line-height: 1; vertical-align: middle; user-select: none; }
-.mi-sm { font-size: 16px; }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 72px; }
-
-/* ヘッダー */
-.header {
-  background: var(--surface);
-  border-bottom: 2px solid var(--border);
-  padding: 14px 16px 10px;
-  position: sticky; top: 0; z-index: 100;
-  box-shadow: 0 2px 8px var(--shadow);
-}
-.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.header h1 { font-size: 20px; color: var(--primary); font-weight: 700; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; }
-.header-actions { display: flex; gap: 8px; }
-.btn-icon { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--primary-pale); color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
-.btn-icon:hover { background: var(--border); }
-
-/* フィルターバー */
-.filter-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
-.filter-bar::-webkit-scrollbar { display: none; }
-.filter-chip { flex-shrink: 0; padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-.filter-chip.active { background: var(--primary); border-color: var(--primary); color: white; }
-
-/* タブ */
-.tabs { display: flex; background: var(--surface); border-bottom: 2px solid var(--border); }
-.tab { flex: 1; padding: 10px 4px; text-align: center; font-size: 12px; font-weight: 600; color: var(--text3); border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
-.tab.active { color: var(--primary); border-bottom-color: var(--primary); }
-
-/* 統計バー */
-.stats-bar {
-  display: flex; gap: 8px; padding: 10px 16px;
-  background: var(--primary-pale);
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto; scrollbar-width: none;
-}
-.stats-bar::-webkit-scrollbar { display: none; }
-.stat-item { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; min-width: 60px; }
-.stat-num { font-size: 18px; font-weight: 700; color: var(--primary); }
-.stat-label { font-size: 10px; color: var(--text3); margin-top: 1px; }
-
-/* カードリスト */
-.list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
-
-.card {
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 14px;
-  box-shadow: 0 2px 6px var(--shadow);
-  cursor: pointer;
-  transition: box-shadow 0.2s, transform 0.15s;
-  position: relative;
-}
-.card:active { transform: scale(0.98); }
-.card:hover { box-shadow: 0 4px 12px var(--shadow); }
-
-.card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
-.card-title { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.4; flex: 1; }
-.card-actions { display: flex; gap: 4px; flex-shrink: 0; }
-.btn-card { width: 28px; height: 28px; border-radius: 50%; border: none; background: none; color: var(--text3); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
-.btn-card:hover { background: var(--surface2); color: var(--primary); }
-
-.card-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; align-items: center; }
-.badge-type { font-size: 11px; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
-.badge-novel { background: #fce8e5; color: #c4474a; }
-.badge-movie { background: #e8f0fd; color: #3b6dbf; }
-.badge-manga { background: #f3e5f5; color: #7b1fa2; }
-.badge-drama { background: #e8f5e9; color: #2e7d32; }
-.badge-other { background: #f5f5f5; color: #616161; }
-
-.badge-status { font-size: 11px; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
-.badge-want { background: #fdf0ee; color: var(--primary-dark); }
-.badge-progress { background: #fff8e1; color: var(--warn); }
-.badge-done { background: #e8f5e9; color: var(--success); }
-
-.card-author { font-size: 12px; color: var(--text3); margin-bottom: 6px; }
-
-/* 星評価 */
-.stars { display: flex; gap: 2px; }
-.star { font-size: 16px; color: #ddd; cursor: pointer; transition: color 0.1s; }
-.star.filled { color: #f0b429; }
-
-/* メモ（ノート風） */
-.card-memo {
-  margin-top: 8px;
-  padding: 8px 10px;
-  background: #fffef5;
-  border-left: 3px solid #f0c84a;
-  border-radius: 0 6px 6px 0;
-  font-size: 12px;
-  color: var(--text2);
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-
-/* タグ */
-.card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-.tag { font-size: 11px; padding: 2px 8px; border-radius: 8px; background: var(--tag-bg); color: var(--tag-text); }
-
-/* 空状態 */
-.empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
-.empty-icon { font-size: 48px; margin-bottom: 12px; }
-.empty-state p { font-size: 14px; line-height: 1.8; }
-
-/* FAB */
-.fab {
-  position: fixed; bottom: 84px; right: 20px;
-  width: 52px; height: 52px; border-radius: 50%;
-  background: var(--primary); color: white;
-  border: none; cursor: pointer; font-size: 24px;
-  box-shadow: 0 4px 16px rgba(232,123,107,0.5);
-  display: flex; align-items: center; justify-content: center;
-  transition: transform 0.2s, box-shadow 0.2s;
-  z-index: 90;
-}
-.fab:active { transform: scale(0.92); }
-.fab:hover { box-shadow: 0 6px 20px rgba(232,123,107,0.6); }
-
-/* ボトムナビ */
-.bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--surface); border-top: 2px solid var(--border);
-  display: flex; z-index: 100;
-  box-shadow: 0 -2px 10px var(--shadow);
-}
-.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 4px; cursor: pointer; border: none; background: none; color: var(--text3); font-size: 10px; gap: 2px; transition: color 0.2s; }
-.nav-item.active { color: var(--primary); }
-.nav-icon { font-size: 22px; }
-
-/* ページ */
-.page { display: none; }
-.page.active { display: block; }
-
-/* モーダル */
-.modal-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(74,37,37,0.4); z-index: 200;
-  padding: 16px; overflow-y: auto;
-}
-.modal-overlay.active { display: flex; align-items: flex-start; justify-content: center; padding-top: 40px; }
-.modal {
-  background: var(--surface); border-radius: var(--radius-lg);
-  padding: 20px; width: 100%; max-width: 480px;
-  box-shadow: 0 8px 30px rgba(74,37,37,0.2);
-}
-.modal-title { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
-.form-group { margin-bottom: 14px; }
-.form-label { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 4px; display: block; }
-.form-input, .form-select, .form-textarea {
-  width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
-  border-radius: 10px; font-size: 14px; color: var(--text);
-  background: var(--surface2); outline: none; font-family: inherit;
-}
-.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary-light); }
-.form-textarea {
-  min-height: 100px; resize: vertical;
-  background: #fffef5;
-  border-left: 3px solid #f0c84a;
-  border-radius: 0 10px 10px 0;
-  line-height: 1.8;
-}
-.star-select { display: flex; gap: 6px; }
-.star-select .star { font-size: 28px; cursor: pointer; }
-
-.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-.btn-primary { flex: 1; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
-.btn-primary:hover { opacity: 0.88; }
-.btn-secondary { flex: 1; padding: 12px; background: var(--surface2); color: var(--text2); border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
-
-/* 確認ダイアログ */
-.confirm-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(74,37,37,0.5); z-index: 300;
-  align-items: center; justify-content: center; padding: 20px;
-}
-.confirm-overlay.active { display: flex; }
-.confirm-box { background: var(--surface); border-radius: var(--radius-lg); padding: 24px; width: 100%; max-width: 300px; }
-.confirm-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-.confirm-msg { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
-.confirm-actions { display: flex; gap: 10px; }
-.btn-danger { flex: 1; padding: 10px; background: #e53935; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
-.btn-cancel { flex: 1; padding: 10px; background: var(--surface2); color: var(--text2); border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; cursor: pointer; }
-
-/* ランキングページ */
-.rank-section { padding: 12px 16px; }
-.rank-section-title { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
-.rank-card {
-  background: var(--surface); border: 1.5px solid var(--border);
-  border-radius: var(--radius-md); padding: 12px 14px;
-  margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
-  box-shadow: 0 2px 4px var(--shadow);
-}
-.rank-num { font-size: 20px; font-weight: 700; color: var(--primary); min-width: 28px; text-align: center; }
-.rank-num.gold { color: #f0b429; }
-.rank-num.silver { color: #9e9e9e; }
-.rank-num.bronze { color: #a97040; }
-.rank-info { flex: 1; }
-.rank-title { font-size: 14px; font-weight: 700; }
-.rank-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
-
-/* 表紙・書籍検索 */
-.book-search-wrap { position: relative; }
-.book-candidates {
-  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-  background: var(--surface); border: 1.5px solid var(--border);
-  border-radius: var(--radius-md); box-shadow: 0 4px 16px var(--shadow);
-  z-index: 50; max-height: 240px; overflow-y: auto;
-}
-.book-candidate {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border);
-  transition: background 0.15s;
-}
-.book-candidate:last-child { border-bottom: none; }
-.book-candidate:hover { background: var(--primary-pale); }
-.book-cand-thumb { width: 36px; height: 50px; object-fit: cover; border-radius: 4px; background: var(--surface2); flex-shrink: 0; }
-.book-cand-thumb-empty { width: 36px; height: 50px; border-radius: 4px; background: var(--surface2); flex-shrink: 0; display:flex;align-items:center;justify-content:center;color:var(--text3); }
-.book-cand-info { flex: 1; min-width: 0; }
-.book-cand-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.book-cand-author { font-size: 11px; color: var(--text3); margin-top: 2px; }
-
-/* カード表紙 */
-.card-cover { width: 48px; height: 66px; object-fit: cover; border-radius: 4px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-.card-cover-wrap { display: flex; gap: 12px; }
-.card-cover-info { flex: 1; min-width: 0; }
-
-/* 表紙プレビュー（モーダル内） */
-.cover-preview { width: 60px; height: 84px; object-fit: cover; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-shrink:0; }
-
-/* 視聴場所 */
-.venue-group { display: flex; gap: 6px; flex-wrap: wrap; }
-.venue-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-.venue-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
-.badge-venue { font-size: 11px; padding: 2px 8px; border-radius: 8px; background: #e8f0fd; color: #3b6dbf; display:inline-flex; align-items:center; gap:3px; }
-
-/* 統計ページ */
-.stats-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-md); padding: 14px 16px; box-shadow: 0 2px 6px var(--shadow); }
-.stats-card-title { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-.stats-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
-.stats-row:last-child { border-bottom: none; }
-.stats-row-label { font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 6px; }
-.stats-row-val { font-size: 14px; font-weight: 700; color: var(--primary); }
-.stats-bar-wrap { margin-top: 4px; }
-.stats-bar-track { height: 8px; background: var(--border); border-radius: 8px; overflow: hidden; margin-top: 4px; }
-.stats-bar-fill { height: 100%; border-radius: 8px; background: var(--primary); transition: width 0.4s; }
-.stats-num-big { font-size: 32px; font-weight: 700; color: var(--primary); }
-.stats-num-label { font-size: 11px; color: var(--text3); }
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.stats-grid-item { text-align: center; padding: 10px 4px; background: var(--surface2); border-radius: var(--radius-sm); }
-
-.btn-check { color: var(--success) !important; }
-.btn-check:hover { background: #e8f5e9 !important; }
-.btn-uncheck { color: var(--text3) !important; }
-.btn-uncheck:hover { background: var(--surface2) !important; }
-
-/* 半星 */
-.star-half { color: #f0b429; position: relative; display: inline-block; }
-.star-half::after { content: '★'; position: absolute; left: 0; top: 0; width: 50%; overflow: hidden; color: #f0b429; }
-.star-half-base { color: #ddd; }
-
-
-
-.star-btn {
-  font-size: 28px; cursor: pointer;
-  user-select: none; line-height: 1;
-  display: inline-block;
-  transition: transform 0.1s;
-  color: #ddd;
-}
-.star-btn:active { transform: scale(0.9); }
+  :root {
+    --primary: #e87b6b;
+    --primary-dark: #d66a5a;
+    --bg: #f8f9fa;
+    --text: #333;
+    --text-light: #666;
+    --card-bg: #fff;
+    --shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 0;
+    font-family: 'Hiragino Sans', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    padding-bottom: 80px;
+    line-height: 1.6;
+  }
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 16px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: var(--shadow);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; cursor: pointer; }
+  .header-actions { display: flex; gap: 12px; }
+  .icon-btn {
+    background: none; border: none; color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #searchBarWrap {
+    padding: 8px 16px; background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    display: none;
+  }
+  .search-input {
+    width: 100%; padding: 10px 14px; border: 1px solid #eee;
+    border-radius: 20px; font-size: 0.95rem; outline: none;
+    background: #f1f3f4;
+  }
+  .container { padding: 16px; max-width: 800px; margin: 0 auto; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s;
+    cursor: pointer;
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  .card:active { transform: scale(0.98); }
+  .card-img { width: 100%; aspect-ratio: 2/3; object-fit: cover; background: #eee; }
+  .card-content { padding: 10px; flex: 1; display: flex; flex-direction: column; }
+  .card-title {
+    font-size: 0.9rem; font-weight: 600; margin-bottom: 4px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; min-height: 2.6em;
+  }
+  .card-meta { font-size: 0.75rem; color: var(--text-light); }
+  .card-stars { color: #f1c40f; font-size: 0.75rem; margin-top: auto; }
+  .add-btn {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 60px; height: 60px; border-radius: 30px;
+    background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 20px rgba(232,123,107,0.4);
+    border: none; cursor: pointer; z-index: 100;
+  }
+  .modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    display: none; align-items: center; justify-content: center; z-index: 200;
+    padding: 16px;
+  }
+  .modal-content {
+    background: #fff; border-radius: 16px; width: 100%; max-width: 450px;
+    max-height: 90vh; overflow-y: auto; padding: 20px;
+    position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .modal-header h2 { margin: 0; font-size: 1.1rem; }
+  .form-group { margin-bottom: 16px; position: relative; }
+  .form-label { display: block; font-size: 0.85rem; color: var(--text-light); margin-bottom: 6px; font-weight: 600; }
+  .form-input {
+    width: 100%; padding: 12px; border: 1.5px solid #eee;
+    border-radius: 8px; font-size: 1rem; outline: none;
+    font-family: inherit;
+  }
+  .form-input:focus { border-color: var(--primary); }
+  .star-select { font-size: 1.8rem; color: #ddd; cursor: pointer; }
+  .star-btn.active { color: #f1c40f; }
+  .modal-footer { display: flex; gap: 12px; margin-top: 24px; }
+  .btn {
+    flex: 1; padding: 12px; border-radius: 8px; border: none;
+    font-weight: 600; cursor: pointer; font-family: inherit; font-size: 1rem;
+  }
+  .btn-cancel { background: #f1f3f4; color: var(--text); }
+  .btn-save { background: var(--primary); color: #fff; }
+  .btn-delete { background: #fee; color: #e74c3c; width: 100%; margin-top: 12px; }
+  .book-candidates {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: #fff; border: 1px solid #ddd; border-top: none;
+    z-index: 300; max-height: 200px; overflow-y: auto;
+    border-radius: 0 0 8px 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: none;
+  }
+  .cand-item {
+    padding: 10px; border-bottom: 1px solid #eee; display: flex; gap: 10px; cursor: pointer;
+  }
+  .cand-item:last-child { border-bottom: none; }
+  .cand-item img { width: 40px; height: 60px; object-fit: cover; border-radius: 4px; }
+  .cand-info { display: flex; flex-direction: column; justify-content: center; }
+  .cand-title { font-size: 0.85rem; font-weight: 600; }
+  .cand-author { font-size: 0.75rem; color: var(--text-light); }
+  .toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.8); color: #fff; padding: 8px 16px;
+    border-radius: 20px; font-size: 0.85rem; pointer-events: none;
+    opacity: 0; transition: opacity 0.3s; z-index: 500;
+  }
 </style>
 </head>
 <body>
 
-<!-- ヘッダー -->
-<div class="header">
-  <div class="header-top">
-    <h1 id="headerTitle"><span class="mi">bookmarks</span> 記録ノート</h1>
-    <div class="header-actions">
-      <button class="btn-icon" onclick="openBackupModal()" title="バックアップ設定"><span class="mi mi-sm">cloud_sync</span></button>
-      <button class="btn-icon" id="searchBtn" onclick="toggleSearch()" title="検索"><span class="mi mi-sm">search</span></button>
+<header>
+  <h1 id="headerTitle" onclick="resetFilter()">記録ノート</h1>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="toggleSearch()"><span class="material-icons-round">search</span></button>
+  </div>
+</header>
+
+<div id="searchBarWrap">
+  <input type="text" id="searchInput" class="search-input" placeholder="タイトル、タグを検索..." oninput="onSearchInput()">
+</div>
+
+<div class="container">
+  <div id="grid" class="grid"></div>
+</div>
+
+<button class="add-btn" onclick="openAddModal()">
+  <span class="material-icons-round" style="font-size: 32px;">add</span>
+</button>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 id="modalTitle">新しい記録</h2>
+      <button class="icon-btn" style="color:#999" onclick="closeModal()">
+        <span class="material-icons-round">close</span>
+      </button>
     </div>
-  </div>
-  <div id="searchBarWrap" style="display:none;margin-bottom:8px">
-    <div style="position:relative">
-      <span class="mi mi-sm" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3)">search</span>
-      <input id="searchInput" class="form-input" placeholder="タイトル・作者・メモ・タグで検索" style="padding-left:34px;padding-right:34px" oninput="onSearchInput()">
-      <button onclick="closeSearch()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;padding:2px"><span class="mi mi-sm">close</span></button>
-    </div>
-  </div>
-  <div class="filter-bar" id="filterBar">
-    <button class="filter-chip active" onclick="setFilter('all',this)"><span class="mi mi-sm">apps</span> すべて</button>
-    <button class="filter-chip" onclick="setFilter('book',this)"><span class="mi mi-sm">menu_book</span> 本</button>
-    <button class="filter-chip" onclick="setFilter('video',this)"><span class="mi mi-sm">movie</span> 映像作品</button>
-    <button class="filter-chip" onclick="setFilter('other',this)"><span class="mi mi-sm">category</span> その他</button>
-  </div>
-</div>
-
-<!-- タブ -->
-<div class="tabs">
-  <button class="tab active" onclick="setTab('want',this)"><span class="mi mi-sm">bookmark_border</span> 気になる</button>
-  <button class="tab" onclick="setTab('done',this)"><span class="mi mi-sm">check_circle_outline</span> 記録</button>
-  <button class="tab" onclick="setTab('all2',this)"><span class="mi mi-sm">list</span> 全部</button>
-  <button class="tab" onclick="setTab('rank',this)"><span class="mi mi-sm">star_border</span> ランキング</button>
-</div>
-
-<!-- 統計 -->
-<div class="stats-bar" id="statsBar"></div>
-
-<!-- ページ: リスト -->
-<div class="page active" id="pageList">
-  <div class="list" id="cardList"></div>
-</div>
-
-<!-- ページ: ランキング -->
-<div class="page" id="pageRank">
-  <div id="rankContent"></div>
-</div>
-
-<!-- ページ: 統計 -->
-<div class="page" id="pageStats">
-  <div id="statsContent" style="padding:16px;display:flex;flex-direction:column;gap:14px"></div>
-</div>
-
-<!-- FAB -->
-<button class="fab" onclick="openAddModal()"><span class="mi">add</span></button>
-
-<!-- ボトムナビ -->
-<div class="bottom-nav">
-  <button class="nav-item active" onclick="showNav('list',this)">
-    <span class="mi nav-icon">format_list_bulleted</span>リスト
-  </button>
-  <button class="nav-item" onclick="showNav('stats',this)">
-    <span class="mi nav-icon">bar_chart</span>統計
-  </button>
-</div>
-
-<!-- 追加/編集モーダル -->
-<div class="modal-overlay" id="editModal">
-  <div class="modal">
-    <div class="modal-title"><span class="mi mi-sm">edit_note</span> <span id="modalTitleText">作品を追加</span></div>
-    <div class="form-group book-search-wrap" id="bookSearchWrap">
-      <label class="form-label">タイトル *</label>
-      <div style="display:flex;gap:6px;align-items:flex-start">
-        <div style="flex:1;position:relative">
-          <input class="form-input" id="fTitle" placeholder="タイトルを入力" oninput="onTitleInput()" autocomplete="off">
-          <div class="book-candidates" id="bookCandidates" style="display:none"></div>
-        </div>
-        <div id="coverPreviewWrap" style="display:none">
-          <img class="cover-preview" id="coverPreviewImg" src="" alt="表紙">
-        </div>
+    <input type="hidden" id="fId">
+    
+    <div style="display:flex; gap:12px; margin-bottom:16px;">
+      <div style="flex:1; position:relative; min-width: 0;">
+        <label class="form-label">タイトル</label>
+        <input class="form-input" id="fTitle" placeholder="タイトルを入力..." autocomplete="off">
+        <div id="bookCandidates" class="book-candidates"></div>
+      </div>
+      <div style="width:70px;">
+        <label class="form-label">画像</label>
+        <img id="fImgPreview" src="" style="width:100%; aspect-ratio:2/3; object-fit:cover; border-radius:4px; background:#f0f0f0; border:1px solid #eee; cursor:pointer;" onclick="triggerFile()">
+        <input type="file" id="fFile" hidden accept="image/*" onchange="onFileChange(this)">
+        <input type="hidden" id="fImgBase64">
       </div>
     </div>
+
     <div class="form-group">
-      <label class="form-label" id="authorLabel">作者 / 監督など</label>
-      <input class="form-input" id="fAuthor" placeholder="省略可">
+      <label class="form-label">著者</label>
+      <input class="form-input" id="fAuthor" placeholder="著者名など">
     </div>
-    <div style="display:flex;gap:10px">
-      <div class="form-group" style="flex:1">
-        <label class="form-label">種類</label>
-        <select class="form-select" id="fType" onchange="updateBookSearch()">
-          <option value="book">本・小説</option>
-          <option value="video">映像作品</option>
-          <option value="other">その他</option>
-        </select>
-      </div>
-      <div class="form-group" style="flex:1">
-        <label class="form-label">ステータス</label>
-        <select class="form-select" id="fStatus">
-          <option value="want">読みたい・見たい</option>
-          <option value="done">読んだ・見た</option>
-        </select>
-      </div>
-    </div>
+
     <div class="form-group">
       <label class="form-label">評価</label>
       <div class="star-select" id="starSelect" style="display:flex;gap:4px">
@@ -423,1140 +203,342 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
         <span class="star-btn" data-idx="4" onclick="onStarTap(event,4)">★</span>
         <span class="star-btn" data-idx="5" onclick="onStarTap(event,5)">★</span>
       </div>
-      </div>
     </div>
+
     <div class="form-group">
       <label class="form-label">タグ（スペース区切り）</label>
-      <input class="form-input" id="fTags" placeholder="例: ミステリー BL 泣ける">
+      <input class="form-input" id="fTags" placeholder="読書 2024 推し">
     </div>
+
     <div class="form-group">
-      <label class="form-label"><span class="mi mi-sm">event</span> 読了・視聴日（任意）</label>
-      <div style="display:flex;gap:6px;align-items:center">
-        <select class="form-select" id="fDateY" style="flex:2"></select>
-        <select class="form-select" id="fDateM" style="flex:1.5"></select>
-        <select class="form-select" id="fDateD" style="flex:1.5"></select>
-      </div>
+      <label class="form-label">メモ</label>
+      <textarea class="form-input" id="fMemo" rows="4" style="resize:none;"></textarea>
     </div>
-    <div class="form-group" id="venueGroup" style="display:none">
-      <label class="form-label"><span class="mi mi-sm">place</span> 視聴場所</label>
-      <div class="venue-group">
-        <button type="button" class="venue-btn" onclick="setVenue('cinema')"><span class="mi mi-sm">movie</span> 映画館</button>
-        <button type="button" class="venue-btn" onclick="setVenue('tv')"><span class="mi mi-sm">tv</span> テレビ</button>
-        <button type="button" class="venue-btn" onclick="setVenue('streaming')"><span class="mi mi-sm">wifi</span> 配信</button>
-        <button type="button" class="venue-btn" onclick="setVenue('')"><span class="mi mi-sm">remove_circle_outline</span> なし</button>
-      </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-save" onclick="saveItem()">保存する</button>
     </div>
-    <div class="form-group" id="releaseYearGroup" style="display:none">
-      <label class="form-label"><span class="mi mi-sm">calendar_today</span> 公開年 / 放送開始</label>
-      <input class="form-input" id="fReleaseYear" placeholder="例: 2023年（自動入力または直接入力）">
-    </div>
-    <div class="form-group">
-      <label class="form-label"><span class="mi mi-sm">edit_note</span> メモ</label>
-      <textarea class="form-textarea" id="fMemo" placeholder="感想・気になったところ・おすすめされた理由など自由に…"></textarea>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal()">キャンセル</button>
-      <button class="btn-primary" onclick="saveItem()">保存する</button>
-    </div>
+    <button id="delBtn" class="btn btn-delete" style="display:none;" onclick="deleteItem()">このデータを削除する</button>
   </div>
 </div>
 
-
-<!-- 統計ドリルダウン一覧モーダル -->
-<div class="modal-overlay" id="statsListModal" style="z-index:250">
-  <div class="modal" style="max-height:80vh;display:flex;flex-direction:column">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div class="modal-title" style="margin-bottom:0" id="statsListTitle"></div>
-      <button class="btn-icon" onclick="closeStatsListModal()"><span class="mi mi-sm">close</span></button>
-    </div>
-    <div id="statsListBody" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px"></div>
-  </div>
-</div>
-<!-- バックアップモーダル -->
-<div class="modal-overlay" id="backupModal">
-  <div class="modal">
-    <div class="modal-title"><span class="mi mi-sm">cloud_sync</span> バックアップ設定</div>
-    <div id="backupSection"></div>
-    <div style="margin-top:16px">
-      <button class="btn-secondary" style="width:100%;padding:10px" onclick="closeBackupModal()">閉じる</button>
-    </div>
-  </div>
-</div>
-
-<!-- 確認ダイアログ -->
-<div class="confirm-overlay" id="confirmOverlay">
-  <div class="confirm-box">
-    <div class="confirm-title">削除しますか？</div>
-    <div class="confirm-msg" id="confirmMsg"></div>
-    <div class="confirm-actions">
-      <button class="btn-cancel" onclick="closeConfirm()">キャンセル</button>
-      <button class="btn-danger" onclick="execDelete()">削除</button>
-    </div>
-  </div>
-</div>
+<div id="toast" class="toast"></div>
 
 <script>
-
-// ─── データ ───
-const STORE_KEY = 'yomitai-list-v1';
-const GIST_TOKEN_KEY = 'yomitai-gist-token';
-const GIST_ID_KEY    = 'yomitai-gist-id';
-const GIST_FILENAME  = 'yomitai-list.json';
+const STORE_KEY = 'my_records_v1';
 let items = [];
-let editingId = null;
-let currentStar = 0;
-let currentTypeFilter = 'all';
-let currentTabFilter = 'want';
-let deleteTargetId = null;
-let _gistTimer = null;
+let currentRating = 0;
 
-// ── localStorage ──
-function loadItems() {
-  try { items = JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch(e) { items = []; }
+// IndexedDB 設定 (画像保存用)
+const DB_NAME = 'RecordAppDB';
+const DB_VERSION = 1;
+const OBJ_STORE = 'images';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onupgradeneeded = e => {
+      e.target.result.createObjectStore(OBJ_STORE);
+    };
+    request.onsuccess = e => resolve(e.target.result);
+    request.onerror = e => reject(e.target.error);
+  });
 }
+
+async function saveToIDB(id, base64) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(OBJ_STORE, 'readwrite');
+    tx.objectStore(OBJ_STORE).put(base64, id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function getFromIDB(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(OBJ_STORE, 'readonly');
+    const request = tx.objectStore(OBJ_STORE).get(id);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function deleteFromIDB(id) {
+  const db = await openDB();
+  const tx = db.transaction(OBJ_STORE, 'readwrite');
+  tx.objectStore(OBJ_STORE).delete(id);
+}
+
+// データ管理
+function loadItems() {
+  const data = localStorage.getItem(STORE_KEY);
+  items = data ? JSON.parse(data) : [];
+  render();
+}
+
 function saveItems() {
   localStorage.setItem(STORE_KEY, JSON.stringify(items));
-  saveToIDB(items);
-  scheduleGist();
 }
-function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
-// ── Gist token/id ──
-function getGistToken() { return localStorage.getItem(GIST_TOKEN_KEY) || ''; }
-function getGistId()    { return localStorage.getItem(GIST_ID_KEY) || ''; }
-function setGistToken(t){ localStorage.setItem(GIST_TOKEN_KEY, t); }
-function setGistId(id)  { localStorage.setItem(GIST_ID_KEY, id); }
+async function render(filterItems = null) {
+  const target = filterItems || items;
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  
+  // 降順
+  const sorted = [...target].sort((a,b) => b.updatedAt - a.updatedAt);
 
-// ── Gist 保存（debounce 2秒）──
-function scheduleGist() {
-  clearTimeout(_gistTimer);
-  _gistTimer = setTimeout(saveToGist, 2000);
-}
-async function findGistByFilename(token) {
-  try {
-    const res = await fetch('https://api.github.com/gists', { cache:'no-store', headers:{'Authorization':'token '+token} });
-    if(!res.ok) return null;
-    const list = await res.json();
-    for(const g of list){ if(g.files && g.files[GIST_FILENAME]) return g.id; }
-  } catch(e) {}
-  return null;
-}
-async function saveToGist() {
-  const token = getGistToken(); if(!token) return;
-  let gistId = getGistId();
-  if(!gistId){ gistId = await findGistByFilename(token); if(gistId) setGistId(gistId); }
-  const payload = { files: {} };
-  payload.files[GIST_FILENAME] = { content: JSON.stringify({ items, savedAt: Date.now() }, null, 2) };
-  try {
-    const res = gistId
-      ? await fetch('https://api.github.com/gists/'+gistId, { method:'PATCH', cache:'no-store', headers:{'Authorization':'token '+token,'Content-Type':'application/json'}, body:JSON.stringify(payload) })
-      : await fetch('https://api.github.com/gists',          { method:'POST',  cache:'no-store', headers:{'Authorization':'token '+token,'Content-Type':'application/json'}, body:JSON.stringify({...payload, public:false}) });
-    if(res.ok){
-      const d = await res.json();
-      if(!gistId) setGistId(d.id);
-      // 通知なし
+  for (const item of sorted) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.onclick = () => openEditModal(item.id);
+
+    let imgSrc = '';
+    if(item.hasImg) {
+      imgSrc = await getFromIDB(item.id) || '';
     }
-  } catch(e) {}
-}
-async function loadFromGist() {
-  const token = getGistToken(); if(!token) return null;
-  let gistId = getGistId();
-  if(!gistId){ gistId = await findGistByFilename(token); if(gistId) setGistId(gistId); }
-  if(!gistId) return null;
-  try {
-    const res = await fetch('https://api.github.com/gists/'+gistId, { cache:'no-store', headers:{'Authorization':'token '+token} });
-    if(!res.ok) return null;
-    const d = await res.json();
-    const raw = d.files?.[GIST_FILENAME]?.content;
-    if(!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed.items || null;
-  } catch(e) { return null; }
-}
 
-// ── IndexedDB ──
-let _idb = null;
-function openIDB() {
-  return new Promise((res, rej) => {
-    if(_idb){ res(_idb); return; }
-    const req = indexedDB.open('yomitai-db', 1);
-    req.onupgradeneeded = e => e.target.result.createObjectStore('kv');
-    req.onsuccess = e => { _idb = e.target.result; res(_idb); };
-    req.onerror = () => rej();
-  });
-}
-async function saveToIDB(data) {
-  try {
-    const db = await openIDB();
-    const tx = db.transaction('kv','readwrite');
-    tx.objectStore('kv').put(data, STORE_KEY);
-  } catch(e) {}
-}
-async function loadFromIDB() {
-  try {
-    const db = await openIDB();
-    return new Promise(res => {
-      const req = db.transaction('kv','readonly').objectStore('kv').get(STORE_KEY);
-      req.onsuccess = () => res(req.result || null);
-      req.onerror = () => res(null);
-    });
-  } catch(e) { return null; }
-}
-
-// ── トースト ──
-function showToast(msg, icon='check_circle') {
-  let el = document.getElementById('toast');
-  if(!el){ el=document.createElement('div'); el.id='toast'; el.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;z-index:500;display:flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:opacity 0.3s;'; document.body.appendChild(el); }
-  el.innerHTML = `<span class="mi mi-sm">${icon}</span>${msg}`;
-  el.style.opacity='1';
-  clearTimeout(el._t);
-  el._t = setTimeout(()=>{ el.style.opacity='0'; }, 2500);
-}
-
-// ── バックアップ設定UI ──
-function renderBackupUI() {
-  const token = getGistToken();
-  const gistId = getGistId();
-  const connected = !!(token && gistId);
-  const statusHtml = connected
-    ? `<span style="color:var(--success);font-weight:600"><span class="mi mi-sm">cloud_done</span> 接続済み</span>`
-    : token
-    ? `<span style="color:var(--warn);font-weight:600"><span class="mi mi-sm">cloud_upload</span> トークン設定済（初回保存で接続）</span>`
-    : `<span style="color:var(--text3)"><span class="mi mi-sm">cloud_off</span> 未設定</span>`;
-  document.getElementById('backupSection').innerHTML = `
-    <div style="font-size:12px;margin-bottom:8px">状態: ${statusHtml}</div>
-    ${!token ? `
-      <div style="font-size:12px;color:var(--text3);line-height:1.7;margin-bottom:10px">
-        GitHubのPersonal Access Token（gist権限）を設定すると<br>データ変更のたびに自動でクラウド保存されます。
+    card.innerHTML = `
+      <img class="card-img" src="${imgSrc || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%22100%%22 height=%22100%%22 fill=%22%23eee%22/><text x=%2250%%22 y=%2250%%22 font-family=%22sans-serif%22 font-size=%2212%22 fill=%22%23ccc%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>No Image</text></svg>'}">
+      <div class="card-content">
+        <div class="card-title">${escapeHtml(item.title)}</div>
+        <div class="card-meta">${item.author ? escapeHtml(item.author) : ''}</div>
+        <div class="card-stars">${'★'.repeat(item.rating)}${'☆'.repeat(5-item.rating)}</div>
       </div>
-      <input type="password" id="gistTokenInput" class="form-input" placeholder="ghp_xxxxxxxxxxxx" style="margin-bottom:8px">
-      <button onclick="applyGistToken()" class="btn-primary" style="width:100%;padding:10px">トークンを保存</button>
-    ` : `
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <button onclick="manualGistSync()" class="btn-primary" style="flex:1;padding:10px"><span class="mi mi-sm">cloud_sync</span> 今すぐ同期</button>
-        <button onclick="restoreFromGist()" class="btn-secondary" style="flex:1;padding:10px"><span class="mi mi-sm">cloud_download</span> 復元</button>
-      </div>
-      <button onclick="clearGistToken()" class="btn-secondary" style="width:100%;padding:10px;font-size:12px">トークンをリセット</button>
-    `}
-  `;
-}
-async function applyGistToken() {
-  const t = document.getElementById('gistTokenInput').value.trim();
-  if(!t){ showToast('トークンを入力してください','warning'); return; }
-  setGistToken(t);
-  showToast('トークンを保存しました','check_circle');
-  renderBackupUI();
-  await saveToGist();
-}
-async function manualGistSync() {
-  showToast('同期中…','cloud_sync');
-  await saveToGist();
-}
-async function restoreFromGist() {
-  showToast('Gistから読み込み中…','cloud_download');
-  const data = await loadFromGist();
-  if(!data){ showToast('データが見つかりませんでした','warning'); return; }
-  items = data;
-  localStorage.setItem(STORE_KEY, JSON.stringify(items));
-  await saveToIDB(items);
-  render();
-  showToast('クラウドから復元しました','check_circle');
-}
-function clearGistToken() {
-  if(!confirm('Gist連携を解除しますか？\nローカルのデータは消えません。')){ return; }
-  localStorage.removeItem(GIST_TOKEN_KEY);
-  localStorage.removeItem(GIST_ID_KEY);
-  renderBackupUI();
-  showToast('Gist連携を解除しました','cloud_off');
-}
-
-// ─── フィルター ───
-function setFilter(type, el) {
-  currentTypeFilter = type;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  render();
-}
-function setTab(tab, el) {
-  currentTabFilter = tab;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  if(tab === 'rank') {
-    document.getElementById('pageList').classList.remove('active');
-    document.getElementById('pageRank').classList.add('active');
-    renderRank();
-  } else {
-    document.getElementById('pageRank').classList.remove('active');
-    document.getElementById('pageList').classList.add('active');
-    render();
+    `;
+    grid.appendChild(card);
   }
 }
 
-// ─── レンダリング ───
-function getFiltered() {
-  return items.filter(it => {
-    const typeOk = currentTypeFilter === 'all' || it.type === currentTypeFilter;
-    let statusOk = true;
-    if(currentTabFilter === 'want') statusOk = it.status === 'want';
-    else if(currentTabFilter === 'done') statusOk = it.status === 'done';
-    return typeOk && statusOk;
-  });
+function escapeHtml(str) {
+  if(!str) return '';
+  return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
-function render() {
-  renderStats();
-  const list = document.getElementById('cardList');
-  const filtered = getFiltered();
-  if(!filtered.length) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">inbox</span></div><p>まだ登録がありません。<br>右下の＋ボタンから追加しましょう！</p></div>`;
-    return;
-  }
-  list.innerHTML = filtered.map(it => cardHTML(it)).join('');
-}
-
-function renderStats() {
-  const total = items.length;
-  const want = items.filter(i=>i.status==='want').length;
-  const done = items.filter(i=>i.status==='done').length;
-  const rated = items.filter(i=>i.star>0);
-  const avg = rated.length ? (rated.reduce((s,i)=>s+i.star,0)/rated.length).toFixed(1) : '-';
-  document.getElementById('statsBar').innerHTML = `
-    <div class="stat-item"><span class="stat-num">${total}</span><span class="stat-label">合計</span></div>
-    <div class="stat-item"><span class="stat-num" style="color:var(--primary-dark)">${want}</span><span class="stat-label">気になる</span></div>
-    <div class="stat-item"><span class="stat-num" style="color:var(--success)">${done}</span><span class="stat-label">記録</span></div>
-    <div class="stat-item"><span class="stat-num" style="color:#f0b429">${avg}</span><span class="stat-label">平均★</span></div>
-  `;
-}
-
-const TYPE_LABEL = { book:'本・小説', manga:'本・小説', video:'映像作品', other:'その他' };
-const TYPE_ICON  = { book:'menu_book', manga:'menu_book', video:'movie', other:'category' };
-// 種類ごとのステータス表現
-const STATUS_WANT = { book:'読みたい', manga:'読みたい', video:'見たい', other:'気になる' };
-const STATUS_DONE = { book:'読んだ', manga:'読んだ', video:'見た', other:'済み' };
-const STATUS_ICON  = { want:'bookmark_border', done:'check_circle_outline' };
-const TYPE_CLASS = { book:'badge-novel', manga:'badge-novel', video:'badge-movie', other:'badge-other' };
-const STATUS_CLASS = { want:'badge-want', done:'badge-done' };
-function getStatusLabel(status, type) {
-  if(status === 'want') return STATUS_WANT[type] || '読みたい';
-  if(status === 'done') return STATUS_DONE[type] || '読んだ';
-  return status;
-}
-
-function starsHTML(n) {
-  let html = '';
-  for(let i=1; i<=5; i++){
-    if(n >= i) html += '<span class="star filled">★</span>';
-    else if(n >= i-0.5) html += '<span class="star" style="color:#f0b429;opacity:0.4">★</span>';
-    else html += '<span class="star">☆</span>';
-  }
-  return html;
-}
-
-function cardHTML(it) {
-  const tags = (it.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
-  const memo = it.memo ? `<div class="card-memo">${esc(it.memo)}</div>` : '';
-  const author = it.author ? `<div class="card-author"><span class="mi mi-sm">person</span> ${esc(it.author)}</div>` : '';
-  const starRow = it.star > 0 ? `<div class="stars">${starsHTML(it.star)}</div>` : '';
-  const dateStr = formatDate(it.date);
-  const dateEl = dateStr ? `<span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:2px"><span class="mi mi-sm">event</span>${esc(dateStr)}</span>` : '';
-  const venueMap = {cinema:'映画館',tv:'テレビ',streaming:'配信'};
-  const venueIconMap = {cinema:'movie',tv:'tv',streaming:'wifi'};
-  const venueEl = it.venue && venueMap[it.venue] ? `<span class="badge-venue"><span class="mi mi-sm">${venueIconMap[it.venue]}</span>${venueMap[it.venue]}</span>` : '';
-  // 放送開始・公開年ラベル（映像作品のみ）
-  const releaseLabel = it.type==='video' ? '放送・公開 ' : '';
-  const releaseEl = it.releaseYear ? `<span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:2px"><span class="mi mi-sm">calendar_today</span>${releaseLabel}${esc(it.releaseYear)}</span>` : '';
-  const typeClass = TYPE_CLASS[it.type]||'badge-other';
-  const typeIcon = TYPE_ICON[it.type]||'category';
-  const typeLabel = TYPE_LABEL[it.type]||'';
-  const statusClass = STATUS_CLASS[it.status]||'badge-want';
-  const statusIcon = STATUS_ICON[it.status]||'help_outline';
-  // metaRowを2行に分ける：1行目=種類・ステータス・★、2行目=視聴場所・公開年・視聴日
-  const metaRow1 = `<div class="card-meta">
-    <span class="badge-type ${typeClass}"><span class="mi mi-sm">${typeIcon}</span> ${typeLabel}</span>
-    <span class="badge-status ${statusClass}"><span class="mi mi-sm">${statusIcon}</span> ${getStatusLabel(it.status,it.type)}</span>
-    ${starRow}
-  </div>`;
-  const hasMeta2 = venueEl || releaseEl || dateEl;
-  const metaRow2 = hasMeta2 ? `<div class="card-meta" style="margin-top:6px;gap:6px">${venueEl}${releaseEl}${dateEl}</div>` : '';
-  const tagsRow = tags ? `<div class="card-tags">${tags}</div>` : '';
-  const actions = `<div class="card-actions" onclick="event.stopPropagation()">
-    <button class="btn-card ${it.status==='want'?'btn-check':'btn-uncheck'}" onclick="quickStatus('${it.id}')" title="${it.status==='want'?'記録済みにする':'気になるに戻す'}"><span class="mi mi-sm">${it.status==='want'?'check_circle_outline':'bookmark_border'}</span></button>
-    <button class="btn-card" onclick="confirmDelete('${it.id}')"><span class="mi mi-sm">delete_outline</span></button>
-  </div>`;
-  // 画像なしのとき左に60px余白を追加して表紙ありと文字位置を揃える
-  const noImgStyle = 'padding-left:60px;';
-  if(it.coverUrl) {
-    return `<div class="card" onclick="openEdit('${it.id}')">
-      <div class="card-cover-wrap">
-        <img class="card-cover" src="${esc(it.coverUrl)}" alt="表紙" onerror="this.style.display='none'">
-        <div class="card-cover-info">
-          <div class="card-header" style="margin-bottom:4px"><div class="card-title">${esc(it.title)}</div>${actions}</div>
-          ${author}${metaRow1}${metaRow2}${tagsRow}
-        </div>
-      </div>${memo}
-    </div>`;
-  }
-  return `<div class="card" onclick="openEdit('${it.id}')">
-    <div class="card-header"><div class="card-title">${esc(it.title)}</div>${actions}</div>
-    ${author}${metaRow1}${metaRow2}${tagsRow}${memo}
-  </div>`;
-}
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-// ─── ランキング ───
-function renderRank() {
-  const rated = items.filter(i=>i.star>0).sort((a,b)=>b.star-a.star||a.title.localeCompare(b.title));
-  if(!rated.length) {
-    document.getElementById('rankContent').innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">star_border</span></div><p>まだ評価した作品がありません。</p></div>`;
-    return;
-  }
-  const numClass = i => i===0?'gold':i===1?'silver':i===2?'bronze':'';
-  const html = rated.map((it,i)=>`
-    <div class="rank-card">
-      <div class="rank-num ${numClass(i)}">${i+1}</div>
-      <div class="rank-info">
-        <div class="rank-title">${esc(it.title)}</div>
-        <div class="rank-sub"><span class="mi mi-sm">${TYPE_ICON[it.type]||'category'}</span> ${TYPE_LABEL[it.type]||''}${it.author?' · '+esc(it.author):''}</div>
-        <div class="stars" style="margin-top:4px">${starsHTML(it.star)}</div>
-      </div>
-    </div>
-  `).join('');
-  document.getElementById('rankContent').innerHTML = `
-    <div class="rank-section">
-      <div class="rank-section-title"><span class="mi mi-sm">emoji_events</span> 評価ランキング（${rated.length}件）</div>
-      ${html}
-    </div>`;
-}
-
-// ─── クイックステータス変更 ───
-function quickStatus(id) {
-  const it = items.find(i=>i.id===id);
-  if(!it) return;
-  const order = ['want','done'];
-  const next = order[(order.indexOf(it.status)+1)%2];
-  it.status = next;
-  saveItems();
-  render();
-}
-
-// ─── 日付セレクト ───
-function initDateSelects() {
-  const cy = new Date().getFullYear();
-  const yEl = document.getElementById('fDateY');
-  const mEl = document.getElementById('fDateM');
-  const dEl = document.getElementById('fDateD');
-  // 年
-  yEl.innerHTML = '<option value="">-- 年</option>';
-  for(let y=cy; y>=2000; y--) yEl.innerHTML += `<option value="${y}">${y}年</option>`;
-  // 月
-  mEl.innerHTML = '<option value="">-- 月</option>';
-  for(let m=1; m<=12; m++) mEl.innerHTML += `<option value="${m}">${m}月</option>`;
-  // 日
-  dEl.innerHTML = '<option value="">-- 日</option>';
-  for(let d=1; d<=31; d++) dEl.innerHTML += `<option value="${d}">${d}日</option>`;
-}
-function setDateSelects(dateObj) {
-  // dateObj: { y:'', m:'', d:'' } または undefined
-  document.getElementById('fDateY').value = dateObj?.y || '';
-  document.getElementById('fDateM').value = dateObj?.m || '';
-  document.getElementById('fDateD').value = dateObj?.d || '';
-}
-function getDateFromSelects() {
-  const y = document.getElementById('fDateY').value;
-  const m = document.getElementById('fDateM').value;
-  const d = document.getElementById('fDateD').value;
-  if(!y && !m && !d) return null;
-  return { y, m, d };
-}
-function formatDate(dateObj) {
-  if(!dateObj) return '';
-  const parts = [];
-  if(dateObj.y) parts.push(dateObj.y + '年');
-  if(dateObj.m) parts.push(dateObj.m + '月');
-  if(dateObj.d) parts.push(dateObj.d + '日');
-  return parts.join('');
-}
-
-// ─── モーダル ───
-let _starTemp = 0;
+// モーダル操作
 function openAddModal() {
-  editingId = null;
-  _starTemp = 0;
-  document.getElementById('modalTitleText').textContent = '作品を追加';
+  document.getElementById('modalTitle').innerText = '新しい記録';
+  document.getElementById('fId').value = '';
   document.getElementById('fTitle').value = '';
   document.getElementById('fAuthor').value = '';
-  document.getElementById('fType').value = 'book'; updateBookSearch();
-  document.getElementById('fStatus').value = 'want';
   document.getElementById('fTags').value = '';
   document.getElementById('fMemo').value = '';
-  _selectedCoverUrl = '';
-  _selectedVenue = '';
-  document.querySelectorAll('.venue-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('fReleaseYear').value = '';
-  initDateSelects();
-  setDateSelects(null);
-  renderStarSelect(0);
-  document.getElementById('coverPreviewWrap').style.display='none';
-  document.getElementById('coverPreviewImg').src = '';
-  document.getElementById('bookCandidates').style.display='none';
-  document.getElementById('bookCandidates').innerHTML='';
-  document.getElementById('bookCandidates')._books = null;
-  document.getElementById('bookCandidates')._videos = null;
-  updateBookSearch();
-  document.getElementById('editModal').classList.add('active');
-  pushState({modal:'edit'});
-  setTimeout(()=>document.getElementById('fTitle').focus(),100);
+  document.getElementById('fImgPreview').src = '';
+  document.getElementById('fImgBase64').value = '';
+  document.getElementById('delBtn').style.display = 'none';
+  setStars(0);
+  document.getElementById('modal').style.display = 'flex';
 }
-function openEdit(id) {
-  const it = items.find(i=>i.id===id);
-  if(!it) return;
-  editingId = id;
-  _starTemp = it.star||0;
-  document.getElementById('modalTitleText').textContent = '作品を編集';
-  document.getElementById('fTitle').value = it.title||'';
-  document.getElementById('fAuthor').value = it.author||'';
-  document.getElementById('fType').value = it.type||'book'; updateBookSearch();
-  document.getElementById('fStatus').value = it.status||'want';
-  document.getElementById('fTags').value = (it.tags||[]).join(' ');
-  document.getElementById('fMemo').value = it.memo||'';
-  _selectedCoverUrl = it.coverUrl||'';
-  _selectedVenue = it.venue||'';
-  document.querySelectorAll('.venue-btn').forEach(b=>{const bv=b.getAttribute('onclick').match(/'([^']*)'/)?.[1]||'';b.classList.toggle('active',bv===_selectedVenue&&_selectedVenue!=='');});
-  document.getElementById('fReleaseYear').value = it.releaseYear||'';
-  initDateSelects();
-  setDateSelects(it.date||null);
-  renderStarSelect(it.star||0);
-  updateBookSearch();
-  if(it.coverUrl){document.getElementById('coverPreviewWrap').style.display='block';document.getElementById('coverPreviewImg').src=it.coverUrl;}else{document.getElementById('coverPreviewWrap').style.display='none';}
-  document.getElementById('editModal').classList.add('active');
-  pushState({modal:'edit'});
+
+async function openEditModal(id) {
+  const item = items.find(i => i.id === id);
+  if(!item) return;
+
+  document.getElementById('modalTitle').innerText = '編集';
+  document.getElementById('fId').value = item.id;
+  document.getElementById('fTitle').value = item.title;
+  document.getElementById('fAuthor').value = item.author || '';
+  document.getElementById('fTags').value = item.tags ? item.tags.join(' ') : '';
+  document.getElementById('fMemo').value = item.memo || '';
+  
+  const imgSrc = await getFromIDB(item.id);
+  document.getElementById('fImgPreview').src = imgSrc || '';
+  document.getElementById('fImgBase64').value = imgSrc || '';
+  
+  setStars(item.rating);
+  document.getElementById('delBtn').style.display = 'block';
+  document.getElementById('modal').style.display = 'flex';
 }
+
 function closeModal() {
-  document.getElementById('editModal').classList.remove('active');
+  document.getElementById('modal').style.display = 'none';
 }
 
-
-function onStarTap(e, idx) {
-  const rect = e.currentTarget.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const isHalf = x < rect.width / 2;
-  const v = isHalf ? idx - 0.5 : idx;
-  _starTemp = (_starTemp === v) ? 0 : v;
-  renderStarSelect(_starTemp);
+// 星評価
+function onStarTap(e, val) {
+  setStars(val);
 }
-function setStar(v) {
-  _starTemp = (_starTemp === v) ? 0 : v;
-  renderStarSelect(_starTemp);
-}
-
-function renderStarSelect(v) {
-  _starTemp = v;
-  document.querySelectorAll('#starSelect .star-btn').forEach((btn, i) => {
-    const idx = i + 1;
-    btn.removeAttribute('style');
-    if(v >= idx) {
-      btn.style.color = '#f0b429';
-    } else if(v >= idx - 0.5) {
-      btn.style.color = '#f0b429';
-      btn.style.opacity = '0.4';
-    } else {
-      btn.style.color = '#ddd';
-    }
+function setStars(val) {
+  currentRating = val;
+  const stars = document.querySelectorAll('.star-btn');
+  stars.forEach(s => {
+    const idx = parseInt(s.dataset.idx);
+    s.classList.toggle('active', idx <= val);
   });
 }
 
-function saveItem() {
+// 画像処理
+function triggerFile() { document.getElementById('fFile').click(); }
+function onFileChange(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result;
+      document.getElementById('fImgPreview').src = base64;
+      document.getElementById('fImgBase64').value = base64;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+// 保存
+async function saveItem() {
+  const id = document.getElementById('fId').value || 'id_' + Date.now();
   const title = document.getElementById('fTitle').value.trim();
-  if(!title) { document.getElementById('fTitle').focus(); return; }
-  const tags = document.getElementById('fTags').value.trim().split(/\s+/).filter(Boolean);
-  if(editingId) {
-    const it = items.find(i=>i.id===editingId);
-    if(it) {
-      it.title = title;
-      it.author = document.getElementById('fAuthor').value.trim();
-      it.type = document.getElementById('fType').value;
-      it.status = document.getElementById('fStatus').value;
-      it.star = _starTemp;
-      it.tags = tags;
-      it.memo = document.getElementById('fMemo').value.trim();
-      it.date = getDateFromSelects();
-      it.coverUrl = _selectedCoverUrl || it.coverUrl || '';
-      it.venue = _selectedVenue || '';
-      it.releaseYear = document.getElementById('fReleaseYear').value.trim();
-      it.updatedAt = Date.now();
-    }
-  } else {
-    items.unshift({
-      id: genId(),
-      title,
-      author: document.getElementById('fAuthor').value.trim(),
-      type: document.getElementById('fType').value,
-      status: document.getElementById('fStatus').value,
-      star: _starTemp,
-      tags,
-      memo: document.getElementById('fMemo').value.trim(),
-      date: getDateFromSelects(),
-      coverUrl: _selectedCoverUrl || '',
-      venue: _selectedVenue || '',
-      releaseYear: document.getElementById('fReleaseYear').value.trim(),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-  }
-  saveItems();
-  closeModal();
-  if(currentTabFilter==='rank') renderRank(); else render();
-}
+  if(!title) { showToast('タイトルを入力してください'); return; }
 
-// ─── 削除 ───
-function confirmDelete(id) {
-  deleteTargetId = id;
-  const it = items.find(i=>i.id===id);
-  document.getElementById('confirmMsg').textContent = `「${it?.title||''}」を削除します。この操作は取り消せません。`;
-  document.getElementById('confirmOverlay').classList.add('active');
-}
-function closeConfirm() {
-  document.getElementById('confirmOverlay').classList.remove('active');
-  deleteTargetId = null;
-}
-function execDelete() {
-  if(!deleteTargetId) return;
-  items = items.filter(i=>i.id!==deleteTargetId);
-  saveItems();
-  closeConfirm();
-  if(currentTabFilter==='rank') renderRank(); else render();
-}
+  const author = document.getElementById('fAuthor').value.trim();
+  const tagsStr = document.getElementById('fTags').value.trim();
+  const tags = tagsStr ? tagsStr.split(/\s+/) : [];
+  const memo = document.getElementById('fMemo').value.trim();
+  const imgBase64 = document.getElementById('fImgBase64').value;
 
-// ─── 検索 ───
-function toggleSearch() {
-  const wrap = document.getElementById('searchBarWrap');
-  const isOpen = wrap.style.display !== 'none';
-  if(isOpen) {
-    closeSearch();
-  } else {
-    wrap.style.display = 'block';
-    document.getElementById('searchBtn').querySelector('.mi').textContent = 'close';
-    setTimeout(() => document.getElementById('searchInput').focus(), 100);
-  }
-}
-function closeSearch() {
-  document.getElementById('searchBarWrap').style.display = 'none';
-  document.getElementById('searchBtn').querySelector('.mi').textContent = 'search';
-  document.getElementById('searchInput').value = '';
-  render();
-}
-function onSearchInput() {
-  const kw = document.getElementById('searchInput').value.trim().toLowerCase();
-  // 検索中はリストページを表示
-  document.getElementById('pageStats').classList.remove('active');
-  document.getElementById('pageRank').classList.remove('active');
-  document.getElementById('pageList').classList.add('active');
-  document.querySelector('.tabs').style.display = 'flex';
-  document.getElementById('statsBar').style.display = 'flex';
-  const list = document.getElementById('cardList');
-  if(!kw) { render(); return; }
-  const filtered = items.filter(it =>
-    it.title.toLowerCase().includes(kw) ||
-    (it.author||'').toLowerCase().includes(kw) ||
-    (it.memo||'').toLowerCase().includes(kw) ||
-    (it.tags||[]).some(t=>t.toLowerCase().includes(kw))
-  );
-  renderStats();
-  if(!filtered.length) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">search_off</span></div><p>「${esc(kw)}」に一致する作品が<br>見つかりませんでした。</p></div>`;
-    return;
-  }
-  list.innerHTML = filtered.map(it=>cardHTML(it)).join('');
-}
-
-function openBackupModal() {
-  renderBackupUI();
-  document.getElementById('backupModal').classList.add('active');
-  pushState({modal:'backup'});
-}
-function closeBackupModal() {
-  document.getElementById('backupModal').classList.remove('active');
-}
-
-// ─── ナビ ───
-function showNav(page, el) {
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  el.classList.add('active');
-  if(page === 'stats') {
-    document.getElementById('pageList').classList.remove('active');
-    document.getElementById('pageRank').classList.remove('active');
-    document.getElementById('pageStats').classList.add('active');
-    renderStatsPage();
-    document.querySelector('.tabs').style.display = 'none';
-    document.getElementById('statsBar').style.display = 'none';
-  } else {
-    document.getElementById('pageStats').classList.remove('active');
-    document.getElementById('pageList').classList.add('active');
-    document.querySelector('.tabs').style.display = 'flex';
-    document.getElementById('statsBar').style.display = 'flex';
-    render();
-  }
-}
-
-function renderStatsPage() {
-  const el = document.getElementById('statsContent');
-  const total = items.length;
-  if(!total) {
-    el.innerHTML = '<div class="empty-state"><span class="mi" style="font-size:48px;color:var(--border)">bar_chart</span><p style="margin-top:12px">まだ登録がありません</p></div>';
-    return;
-  }
-  const want  = items.filter(i=>i.status==='want').length;
-  const done  = items.filter(i=>i.status==='done').length;
-  const rated = items.filter(i=>i.star>0);
-  const avg   = rated.length ? (rated.reduce((s,i)=>s+i.star,0)/rated.length).toFixed(1) : '-';
-  const pct   = n => total ? Math.round(n/total*100) : 0;
-  const typeConf = [
-    {key:'book',  label:'本・小説・漫画', icon:'menu_book'},
-    {key:'video', label:'映像作品',        icon:'movie'},
-    {key:'other', label:'その他',          icon:'category'},
-  ];
-  const venueConf = [
-    {key:'cinema',    label:'映画館', icon:'movie'},
-    {key:'tv',        label:'テレビ', icon:'tv'},
-    {key:'streaming', label:'配信',   icon:'wifi'},
-  ];
-  const videoItems = items.filter(i=>i.type==='video');
-
-  function mkBtn(ft,fv,lb) {
-    const el = document.createElement('div');
-    el.className = 'sfl-btn'; el.dataset.ft=ft; el.dataset.fv=fv; el.dataset.lb=lb;
-    el.style.cursor='pointer'; return el;
-  }
-
-  // 全体カード
-  const c1 = document.createElement('div'); c1.className='stats-card';
-  c1.innerHTML='<div class="stats-card-title"><span class="mi mi-sm">summarize</span> 全体</div>';
-  const grid=document.createElement('div'); grid.className='stats-grid';
-  [['all','','全作品',total,'var(--primary)'],['status','want','気になる',want,'var(--primary-dark)'],['status','done','記録済み',done,'var(--success)']].forEach(([ft,fv,lb,n,col])=>{
-    const g=document.createElement('div'); g.className='stats-grid-item sfl-btn';
-    g.dataset.ft=ft; g.dataset.fv=fv; g.dataset.lb=lb; g.style.cursor='pointer';
-    g.innerHTML='<div class="stats-num-big" style="color:'+col+'">'+n+'</div><div class="stats-num-label">'+lb+' ›</div>';
-    grid.appendChild(g);
-  });
-  c1.appendChild(grid);
-  c1.insertAdjacentHTML('beforeend','<div class="stats-bar-wrap" style="margin-top:12px"><div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px"><span>記録済み率</span><span>'+pct(done)+'%</span></div><div class="stats-bar-track"><div class="stats-bar-fill" style="width:'+pct(done)+'%;background:var(--success)"></div></div></div>');
-
-  // 種類別カード
-  const c2=document.createElement('div'); c2.className='stats-card';
-  c2.innerHTML='<div class="stats-card-title"><span class="mi mi-sm">category</span> 種類別</div>';
-  const typeItems=typeConf.filter(t=>items.some(i=>i.type===t.key));
-  const totT=typeItems.reduce((s,t)=>s+items.filter(i=>i.type===t.key).length,0);
-  typeItems.forEach(t=>{
-    const cnt=items.filter(i=>i.type===t.key).length;
-    const p=totT?Math.round(cnt/totT*100):0;
-    const row=document.createElement('div'); row.className='stats-row';
-    row.innerHTML='<div class="stats-row-label"><span class="mi mi-sm">'+t.icon+'</span>'+t.label+'</div>';
-    const rr=document.createElement('div'); rr.style.cssText='display:flex;align-items:center;gap:8px';
-    rr.innerHTML='<div class="stats-bar-track" style="width:80px"><div class="stats-bar-fill" style="width:'+p+'%"></div></div>';
-    const v=mkBtn('type',t.key,t.label); v.className+=' stats-row-val'; v.textContent=cnt+' ›';
-    rr.appendChild(v); row.appendChild(rr); c2.appendChild(row);
-  });
-
-  // 種類×ステータスカード
-  const c3=document.createElement('div'); c3.className='stats-card';
-  c3.innerHTML='<div class="stats-card-title"><span class="mi mi-sm">playlist_add_check</span> 種類 × ステータス</div>';
-  typeConf.filter(t=>items.some(i=>i.type===t.key)).forEach(t=>{
-    const tw=items.filter(i=>i.type===t.key&&i.status==='want').length;
-    const td2=items.filter(i=>i.type===t.key&&i.status==='done').length;
-    const row=document.createElement('div'); row.className='stats-row';
-    row.innerHTML='<div class="stats-row-label"><span class="mi mi-sm">'+t.icon+'</span>'+t.label+'</div>';
-    const rr=document.createElement('div'); rr.style.cssText='font-size:12px;color:var(--text3)';
-    const bw=mkBtn('typeStatus',t.key+'_want',t.label+'（気になる）');
-    bw.style.cssText='color:var(--primary-dark);cursor:pointer;font-weight:bold'; bw.textContent=tw+' ›';
-    const bd=mkBtn('typeStatus',t.key+'_done',t.label+'（記録済み）');
-    bd.style.cssText='color:var(--success);cursor:pointer;font-weight:bold'; bd.textContent=td2+' ›';
-    rr.appendChild(document.createTextNode('気になる '));
-    rr.appendChild(bw);
-    rr.appendChild(document.createTextNode(' / 記録 '));
-    rr.appendChild(bd);
-    row.appendChild(rr); c3.appendChild(row);
-  });
-
-  // 視聴場所カード
-  const vItems=venueConf.filter(v=>videoItems.some(i=>i.venue===v.key));
-  let c4=null;
-  if(vItems.length){
-    c4=document.createElement('div'); c4.className='stats-card';
-    c4.innerHTML='<div class="stats-card-title"><span class="mi mi-sm">place</span> 視聴場所（映像作品）</div>';
-    vItems.forEach(v=>{
-      const cnt=videoItems.filter(i=>i.venue===v.key).length;
-      const row=document.createElement('div'); row.className='stats-row';
-      row.innerHTML='<div class="stats-row-label"><span class="mi mi-sm">'+v.icon+'</span>'+v.label+'</div>';
-      const val=mkBtn('venue',v.key,v.label); val.className+=' stats-row-val'; val.textContent=cnt+' ›';
-      row.appendChild(val); c4.appendChild(row);
-    });
-  }
-
-  // 評価分布カード
-  const starDist=[5,4,3,2,1].map(s=>({s,count:items.filter(i=>i.star===s).length})).filter(d=>d.count>0);
-  let c5=null;
-  if(starDist.length){
-    c5=document.createElement('div'); c5.className='stats-card';
-    c5.innerHTML='<div class="stats-card-title"><span class="mi mi-sm">star</span> 評価分布（平均 '+avg+'★）</div>';
-    starDist.forEach(d=>{
-      const p=rated.length?Math.round(d.count/rated.length*100):0;
-      const row=document.createElement('div'); row.className='stats-row';
-      row.innerHTML='<div class="stats-row-label">'+'★'.repeat(d.s)+'☆'.repeat(5-d.s)+'</div>';
-      const rr=document.createElement('div'); rr.style.cssText='display:flex;align-items:center;gap:8px';
-      rr.innerHTML='<div class="stats-bar-track" style="width:80px"><div class="stats-bar-fill" style="width:'+p+'%;background:#f0b429"></div></div>';
-      const val=mkBtn('star',String(d.s),'★'+d.s); val.className+=' stats-row-val'; val.style.color='#f0b429'; val.textContent=d.count+' ›';
-      rr.appendChild(val); row.appendChild(rr); c5.appendChild(row);
-    });
-  }
-
-  el.innerHTML='';
-  [c1,c2,c3,c4,c5].forEach(card=>{ if(card) el.appendChild(card); });
-}
-
-
-
-
-
-
-// ─── 統計ドリルダウン ───
-// sfl-btnクリック委譲
-document.addEventListener('click', e => {
-  const btn = e.target.closest('.sfl-btn');
-  if(!btn) return;
-  const ft = btn.dataset.ft;
-  const fv = btn.dataset.fv;
-  const lb = btn.dataset.lb;
-  if(ft) showFilteredList(ft, fv||null, lb||'');
-});
-
-function showFilteredList(filterType, filterVal, label) {
-  let filtered = [];
-  if(filterType === 'all')         filtered = [...items];
-  else if(filterType === 'status') filtered = items.filter(i=>i.status===filterVal);
-  else if(filterType === 'type')   filtered = items.filter(i=>i.type===filterVal);
-  else if(filterType === 'typeStatus') {
-    const [type, status] = filterVal.split('_');
-    filtered = items.filter(i=>i.type===type&&i.status===status);
-  }
-  else if(filterType === 'venue')  filtered = items.filter(i=>i.venue===filterVal);
-  else if(filterType === 'star')   filtered = items.filter(i=>i.star===Number(filterVal));
-
-  // リストページに遷移して結果を表示
-  document.getElementById('pageStats').classList.remove('active');
-  document.getElementById('pageRank').classList.remove('active');
-  document.getElementById('pageList').classList.add('active');
-  document.querySelector('.tabs').style.display = 'flex';
-  document.getElementById('statsBar').style.display = 'flex';
-  // ボトムナビをリストに戻す
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.querySelector('.nav-item').classList.add('active');
-
-  // ヘッダーに絞り込み表示中のラベルを表示
-  document.getElementById('headerTitle').innerHTML = '<span class="mi">arrow_back</span> ' + label;
-  document.getElementById('headerTitle').style.cursor = 'pointer';
-  document.getElementById('headerTitle').onclick = () => {
-    document.getElementById('headerTitle').innerHTML = '<span class="mi">bookmarks</span> 記録ノート';
-    document.getElementById('headerTitle').style.cursor = '';
-    document.getElementById('headerTitle').onclick = null;
-    render();
+  const existingIdx = items.findIndex(i => i.id === id);
+  const newItem = {
+    id, title, author, rating: currentRating, tags, memo,
+    hasImg: !!imgBase64,
+    updatedAt: Date.now()
   };
 
-  renderStats();
-  const list = document.getElementById('cardList');
-  if(!filtered.length) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">inbox</span></div><p>該当する作品がありません</p></div>';
+  if(imgBase64) {
+    await saveToIDB(id, imgBase64);
   } else {
-    list.innerHTML = filtered.map(it => cardHTML(it)).join('');
+    await deleteFromIDB(id);
   }
-}
-function closeStatsListModal() {
-  document.getElementById('statsListModal').classList.remove('active');
-}
-// ─── 書籍検索（Google Books API）───
-let _selectedCoverUrl = '';
-let _bookSearchTimer = null;
 
-function updateBookSearch() {
-  const type = document.getElementById('fType').value;
-  const isBook = type === 'book';
-  const isVideo = type === 'video';
-  // 候補を一旦閉じる
-  document.getElementById('bookCandidates').style.display = 'none';
-  // 視聴場所・公開年は映像作品のみ
-  document.getElementById('venueGroup').style.display = isVideo ? 'block' : 'none';
-  document.getElementById('releaseYearGroup').style.display = isVideo ? 'block' : 'none';
-  // 表紙プレビューは本・映像作品のみ（otherは非表示）
-  if(!isBook && !isVideo) {
-    document.getElementById('coverPreviewWrap').style.display = 'none';
-    _selectedCoverUrl = '';
+  if(existingIdx > -1) {
+    items[existingIdx] = newItem;
+  } else {
+    items.push(newItem);
   }
-  // 作者ラベル変更
-  const authorLabel = document.querySelector('label[for="fAuthor"]') || document.getElementById('fAuthor')?.previousElementSibling;
-  const lEl = document.getElementById('authorLabel');
-  if(lEl) lEl.textContent = isVideo ? '監督 / 制作' : '作者 / 監督など';
+
+  saveItems();
+  closeModal();
+  render();
+  showToast('保存しました');
 }
 
-function onTitleInput() {
-  const type = document.getElementById('fType').value;
-  const q = document.getElementById('fTitle').value.trim();
-  clearTimeout(_bookSearchTimer);
+async function deleteItem() {
+  if(!confirm('本当に削除しますか？')) return;
+  const id = document.getElementById('fId').value;
+  items = items.filter(i => i.id !== id);
+  await deleteFromIDB(id);
+  saveItems();
+  closeModal();
+  render();
+  showToast('削除しました');
+}
+
+// 検索
+function toggleSearch() {
+  const wrap = document.getElementById('searchBarWrap');
+  const isShow = wrap.style.display === 'block';
+  wrap.style.display = isShow ? 'none' : 'block';
+  if(!isShow) document.getElementById('searchInput').focus();
+}
+
+function onSearchInput() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  if(!q) { render(); return; }
+  const filtered = items.filter(i => {
+    return i.title.toLowerCase().includes(q) || 
+           (i.author && i.author.toLowerCase().includes(q)) ||
+           (i.tags && i.tags.some(t => t.toLowerCase().includes(q)));
+  });
+  render(filtered);
+}
+
+function resetFilter() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchBarWrap').style.display = 'none';
+  render();
+}
+
+// 簡易トースト
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerText = msg;
+  t.style.opacity = 1;
+  setTimeout(() => t.style.opacity = 0, 2000);
+}
+
+// 書籍検索候補 (Google Books API)
+let timer;
+document.getElementById('fTitle').addEventListener('input', (e) => {
+  clearTimeout(timer);
+  const q = e.target.value.trim();
   if(q.length < 2) {
     document.getElementById('bookCandidates').style.display = 'none';
     return;
   }
-  if(type === 'book') {
-    _bookSearchTimer = setTimeout(() => searchBooks(q), 500);
-  } else if(type === 'video') {
-    _bookSearchTimer = setTimeout(() => searchVideos(q), 500);
-  }
-}
+  timer = setTimeout(() => fetchBooks(q), 500);
+});
 
-async function searchBooks(q) {
-  const candEl = document.getElementById('bookCandidates');
-  candEl.style.display = 'block';
-  candEl.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>';
+async function fetchBooks(q) {
   try {
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8&printType=books`;
-    const res = await fetch(url);
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=5`);
     const data = await res.json();
-    const items = data.items || [];
-    if(!items.length) {
-      candEl.style.display = 'none'; // 本は候補なしのとき非表示
-      return;
-    }
-    candEl.innerHTML = items.map((item, i) => {
-      const info = item.volumeInfo || {};
-      const title = info.title || '';
-      const authors = (info.authors || []).join(', ');
-      const thumb = info.imageLinks?.thumbnail?.replace('http:','https:') || '';
-      const thumbHTML = thumb
-        ? `<img class="book-cand-thumb" src="${thumb}" alt="" onerror="this.style.display='none'">`
-        : `<div class="book-cand-thumb-empty"><span class="mi mi-sm">menu_book</span></div>`;
-      return `<div class="book-candidate" onclick="selectBook(${i})">
-        ${thumbHTML}
-        <div class="book-cand-info">
-          <div class="book-cand-title">${esc(title)}</div>
-          <div class="book-cand-author">${esc(authors)}</div>
-        </div>
-      </div>`;
-    }).join('');
-    candEl._books = items;
-  } catch(e) {
-    candEl.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました</div>';
-  }
-}
-
-function selectBook(i) {
-  const candEl = document.getElementById('bookCandidates');
-  const items = candEl._books || [];
-  const item = items[i];
-  if(!item) return;
-  const info = item.volumeInfo || {};
-  document.getElementById('fTitle').value = info.title || '';
-  const authors = (info.authors || []).join(', ');
-  if(authors) document.getElementById('fAuthor').value = authors;
-  // ジャンルをタグに自動入力（既存タグと統合）
-  const categories = info.categories || [];
-  if(categories.length) {
-    const existing = document.getElementById('fTags').value.trim();
-    const newTags = categories.map(cat => cat.split('/')[0].trim()).filter(Boolean);
-    const merged = existing
-      ? [...new Set([...existing.split(/\s+/), ...newTags])].join(' ')
-      : newTags.join(' ');
-    document.getElementById('fTags').value = merged;
-  }
-  const thumb = info.imageLinks?.thumbnail?.replace('http:','https:') || '';
-  _selectedCoverUrl = thumb;
-  if(thumb) {
-    document.getElementById('coverPreviewWrap').style.display = 'block';
-    document.getElementById('coverPreviewImg').src = thumb;
-  }
-  candEl.style.display = 'none';
-}
-
-// 候補を閉じる（fTitleのblurから200ms後に、候補内タップなら閉じない）
-let _candCloseTimer = null;
-document.getElementById('fTitle') && document.getElementById('fTitle').addEventListener('blur', () => {
-  _candCloseTimer = setTimeout(() => {
+    if(!data.items) return;
+    
     const cand = document.getElementById('bookCandidates');
-    if(cand) cand.style.display = 'none';
-  }, 300);
-});
-document.addEventListener('mousedown', e => {
-  const cand = document.getElementById('bookCandidates');
-  if(cand && cand.contains(e.target)) {
-    clearTimeout(_candCloseTimer);
-  }
-});
-document.addEventListener('touchstart', e => {
-  const cand = document.getElementById('bookCandidates');
-  if(cand && cand.contains(e.target)) {
-    clearTimeout(_candCloseTimer);
-  }
-}, {passive: true});
-
-
-// ─── TMDb検索（映像作品・APIキーなし） ───
-let _selectedVenue = '';
-
-function setVenue(v) {
-  _selectedVenue = v;
-  document.querySelectorAll('.venue-btn').forEach(b => {
-    const bv = b.getAttribute('onclick').match(/'([^']*)'/)?.[1] || '';
-    b.classList.toggle('active', bv === v && v !== '');
-  });
-}
-
-async function searchVideos(q) {
-  const candEl = document.getElementById('bookCandidates');
-  candEl.style.display = 'block';
-  candEl.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>';
-  try {
-    // iTunes（映画・ドラマ）とAniList（アニメ）を並列検索
-    const [itunesData, aniData] = await Promise.all([
-      // iTunes: movieとtvSeason両方、country指定なしで広く検索
-      fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=movie&limit=4&lang=ja_jp`)
-        .then(r=>r.json()).catch(()=>({results:[]})),
-      fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=tvSeason&limit=4&lang=ja_jp`)
-        .then(r=>r.json()).catch(()=>({results:[]})),
-    ]);
-
-    const results = [
-      ...(itunesData.results||[]).map(r=>({
-        title: r.trackName || r.collectionName || '',
-        director: r.artistName || '',
-        year: r.releaseDate ? r.releaseDate.slice(0,4) : '',
-        kind: 'movie',
-        thumb: (r.artworkUrl100||'').replace('100x100bb','400x400bb')
-      })),
-      ...(aniData.results||[]).map(r=>({
-        title: r.collectionName || r.trackName || '',
-        director: r.artistName || '',
-        year: r.releaseDate ? r.releaseDate.slice(0,4) : '',
-        kind: 'tv',
-        thumb: (r.artworkUrl100||'').replace('100x100bb','400x400bb')
-      }))
-    ].filter(r=>r.title).slice(0,8);
-
-    if(!results.length) {
-      candEl.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">候補が見つかりませんでした。<br>タイトル・監督・公開年を直接入力してください。</div>';
-      return;
-    }
-    candEl._videos = results;
-    candEl.innerHTML = results.map((r,i) => {
-      const kindIcon = r.kind==='tv' ? 'tv' : 'movie';
-      const kindLabel = r.kind==='tv' ? 'ドラマ・TV' : '映画・アニメ';
-      const thumbHTML = r.thumb
-        ? `<img class="book-cand-thumb" src="${r.thumb}" alt="" onerror="this.style.display='none'">`
-        : `<div class="book-cand-thumb-empty"><span class="mi mi-sm">${kindIcon}</span></div>`;
-      return `<div class="book-candidate" onclick="selectVideo(${i})">
-        ${thumbHTML}
-        <div class="book-cand-info">
-          <div class="book-cand-title">${esc(r.title)}</div>
-          <div class="book-cand-author"><span class="mi mi-sm" style="font-size:12px">${kindIcon}</span> ${esc(kindLabel)}${r.director?' · '+esc(r.director):''}${r.year?' · '+r.year:''}</div>
+    cand.innerHTML = '';
+    data.items.forEach(b => {
+      const info = b.volumeInfo;
+      const title = info.title;
+      const author = info.authors ? info.authors[0] : '';
+      const thumb = info.imageLinks ? info.imageLinks.thumbnail.replace('http:','https:') : '';
+      
+      const item = document.createElement('div');
+      item.className = 'cand-item';
+      item.onclick = () => selectBook(title, author, thumb);
+      item.innerHTML = `
+        <img src="${thumb || ''}">
+        <div class="cand-info">
+          <div class="cand-title">${escapeHtml(title)}</div>
+          <div class="cand-author">${escapeHtml(author)}</div>
         </div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    candEl.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました。直接入力してください。</div>';
-  }
-}
-
-function selectVideo(i) {
-  const candEl = document.getElementById('bookCandidates');
-  const results = candEl._videos || [];
-  const r = results[i];
-  if(!r) return;
-  document.getElementById('fTitle').value = r.title;
-  if(r.director) document.getElementById('fAuthor').value = r.director;
-  if(r.year) document.getElementById('fReleaseYear').value = r.year + '年';
-  // カバー画像を保存
-  const thumb = r.thumb || '';
-  _selectedCoverUrl = thumb;
-  if(thumb) {
-    document.getElementById('coverPreviewWrap').style.display = 'block';
-    document.getElementById('coverPreviewImg').src = thumb;
-  } else {
-    document.getElementById('coverPreviewWrap').style.display = 'none';
-  }
-  candEl.style.display = 'none';
-}
-
-// ─── 戻るボタン対応 ───
-function pushState(state) {
-  history.pushState(state, '');
-}
-
-window.addEventListener('popstate', e => {
-  const state = e.state;
-  // モーダルが開いていれば閉じる
-  if(document.getElementById('editModal').classList.contains('active')) {
-    closeModal(); return;
-  }
-  if(document.getElementById('backupModal').classList.contains('active')) {
-    closeBackupModal(); return;
-  }
-  if(document.getElementById('statsListModal').classList.contains('active')) {
-    closeStatsListModal(); return;
-  }
-  if(document.getElementById('confirmOverlay').classList.contains('active')) {
-    closeConfirm(); return;
-  }
-  // 統計ページ表示中なら리스트に戻る
-  if(document.getElementById('pageStats').classList.contains('active')) {
-    const listBtn = document.querySelector('.nav-item');
-    showNav('list', listBtn);
-    return;
-  }
-  // ランキングページ表示中ならリストに戻る
-  if(document.getElementById('pageRank').classList.contains('active')) {
-    setTab('want', document.querySelector('.tab'));
-    return;
-  }
-  // 検索バーが開いていれば閉じる
-  if(document.getElementById('searchBarWrap').style.display !== 'none') {
-    closeSearch(); return;
-  }
-  // ヘッダーが絞り込み中なら戻す
-  const headerTitle = document.getElementById('headerTitle');
-  if(headerTitle.onclick) {
-    headerTitle.onclick();
-    return;
-  }
-  // それ以外は履歴を積み直して終了を防ぐ
-  history.pushState({}, '');
-});
-
-// 初期状態の履歴を積む
-history.pushState({}, '');
-
-// fTitleからフォーカスが外れたら候補を閉じる（200ms遅延でタップ選択を保護）
-document.addEventListener('DOMContentLoaded', () => {
-  const fTitle = document.getElementById('fTitle');
-  if(fTitle) {
-    fTitle.addEventListener('blur', () => {
-      setTimeout(() => {
-        const cand = document.getElementById('bookCandidates');
-        if(cand) cand.style.display = 'none';
-      }, 200);
+      `;
+      cand.appendChild(item);
     });
-  }
-});
-// ─── 初期化 ───
-async function init() {
-  loadItems();
-  // IDBからも読み込み（localStorageが空なら復元）
-  if(!items.length) {
-    const idbData = await loadFromIDB();
-    if(idbData && idbData.length) {
-      items = idbData;
-      localStorage.setItem(STORE_KEY, JSON.stringify(items));
+    cand.style.display = 'block';
+  } catch(e) {}
+}
+
+async function selectBook(title, author, thumb) {
+  document.getElementById('fTitle').value = title;
+  document.getElementById('fAuthor').value = author;
+  document.getElementById('bookCandidates').style.display = 'none';
+  
+  if(thumb) {
+    // URLから画像をフェッチしてBase64に変換しプレビュー
+    try {
+      const response = await fetch(thumb);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        document.getElementById('fImgPreview').src = reader.result;
+        document.getElementById('fImgBase64').value = reader.result;
+      }
+      reader.readAsDataURL(blob);
+    } catch(err) {
+      console.error('Image fetch failed', err);
     }
   }
-  render();
 }
-init();
 
+// 候補閉じる
+document.addEventListener('click', (e) => {
+  if(!e.target.closest('#fTitle') && !e.target.closest('#bookCandidates')) {
+    document.getElementById('bookCandidates').style.display = 'none';
+  }
+});
+
+// 初期化
+loadItems();
 </script>
+
 </body>
 </html>
