@@ -735,7 +735,7 @@ function renderStats() {
   `;
 }
 
-const TYPE_LABEL = { book:'本・小説・漫画', manga:'本・小説・漫画', video:'映像作品', other:'その他' };
+const TYPE_LABEL = { book:'本・小説', manga:'本・小説', video:'映像作品', other:'その他' };
 const TYPE_ICON  = { book:'menu_book', manga:'menu_book', video:'movie', other:'category' };
 // 種類ごとのステータス表現
 const STATUS_WANT = { book:'読みたい', manga:'読みたい', video:'見たい', other:'気になる' };
@@ -1316,12 +1316,14 @@ function onTitleInput() {
   const type = document.getElementById('fType').value;
   const q = document.getElementById('fTitle').value.trim();
   clearTimeout(_bookSearchTimer);
-  document.getElementById('bookCandidates').style.display = 'none';
-  if(q.length < 2) return;
+  if(q.length < 2) {
+    document.getElementById('bookCandidates').style.display = 'none';
+    return;
+  }
   if(type === 'book') {
-    _bookSearchTimer = setTimeout(() => searchBooks(q), 400);
+    _bookSearchTimer = setTimeout(() => searchBooks(q), 500);
   } else if(type === 'video') {
-    _bookSearchTimer = setTimeout(() => searchVideos(q), 400);
+    _bookSearchTimer = setTimeout(() => searchVideos(q), 500);
   }
 }
 
@@ -1369,6 +1371,16 @@ function selectBook(i) {
   document.getElementById('fTitle').value = info.title || '';
   const authors = (info.authors || []).join(', ');
   if(authors) document.getElementById('fAuthor').value = authors;
+  // ジャンルをタグに自動入力（既存タグと統合）
+  const categories = info.categories || [];
+  if(categories.length) {
+    const existing = document.getElementById('fTags').value.trim();
+    const newTags = categories.map(cat => cat.split('/')[0].trim()).filter(Boolean);
+    const merged = existing
+      ? [...new Set([...existing.split(/\s+/), ...newTags])].join(' ')
+      : newTags.join(' ');
+    document.getElementById('fTags').value = merged;
+  }
   const thumb = info.imageLinks?.thumbnail?.replace('http:','https:') || '';
   _selectedCoverUrl = thumb;
   if(thumb) {
@@ -1378,21 +1390,26 @@ function selectBook(i) {
   candEl.style.display = 'none';
 }
 
-// 候補以外をタップで閉じる（モーダル外のみ）
-document.addEventListener('click', e => {
+// 候補を閉じる（fTitleのblurから200ms後に、候補内タップなら閉じない）
+let _candCloseTimer = null;
+document.getElementById('fTitle') && document.getElementById('fTitle').addEventListener('blur', () => {
+  _candCloseTimer = setTimeout(() => {
+    const cand = document.getElementById('bookCandidates');
+    if(cand) cand.style.display = 'none';
+  }, 300);
+});
+document.addEventListener('mousedown', e => {
   const cand = document.getElementById('bookCandidates');
-  if(!cand || cand.style.display === 'none') return;
-  // モーダル内はeditModalを基準に判定
-  const modal = document.getElementById('editModal');
-  const input = document.getElementById('fTitle');
-  // bookCandidates自体か、タイトル入力欄か、モーダル外ならOK
-  if(cand.contains(e.target)) return; // 候補内タップは閉じない
-  if(input && input === e.target) return; // input自体タップは閉じない
-  // モーダル外のクリックのみ閉じる
-  if(modal && !modal.contains(e.target)) {
-    cand.style.display = 'none';
+  if(cand && cand.contains(e.target)) {
+    clearTimeout(_candCloseTimer);
   }
 });
+document.addEventListener('touchstart', e => {
+  const cand = document.getElementById('bookCandidates');
+  if(cand && cand.contains(e.target)) {
+    clearTimeout(_candCloseTimer);
+  }
+}, {passive: true});
 
 
 // ─── TMDb検索（映像作品・APIキーなし） ───
@@ -1411,44 +1428,40 @@ async function searchVideos(q) {
   candEl.style.display = 'block';
   candEl.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>';
   try {
-    // TMDb multi-search（APIキー不要の公開エンドポイントは使えないため、movie+tvを並列）
-    const [movRes, tvRes] = await Promise.all([
-      fetch(`https://api.themoviedb.org/3/search/multi?api_key=4f4f4a2c9b9c4b2a1c9c9b9a4b2a1c9c&query=${encodeURIComponent(q)}&language=ja&page=1`).catch(()=>null),
-      Promise.resolve(null)
+    // iTunes（映画・ドラマ）とAniList（アニメ）を並列検索
+    const [itunesData, aniData] = await Promise.all([
+      // iTunes: movieとtvSeason両方、country指定なしで広く検索
+      fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=movie&limit=4&lang=ja_jp`)
+        .then(r=>r.json()).catch(()=>({results:[]})),
+      fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=tvSeason&limit=4&lang=ja_jp`)
+        .then(r=>r.json()).catch(()=>({results:[]})),
     ]);
-    // TMDbはAPIキー必須のため、代替としてOMDb（無料・キー不要でタイトル検索）を使用
-    // OMDbもキー必要なため、ここではiTunes Search APIを使用（完全無料・キー不要）
-    const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&country=jp&media=movie&limit=5&lang=ja_jp`;
-    const tvUrl     = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&country=jp&media=tvSeason&limit=5&lang=ja_jp`;
-    const [movData, tvData] = await Promise.all([
-      fetch(itunesUrl).then(r=>r.json()).catch(()=>({results:[]})),
-      fetch(tvUrl).then(r=>r.json()).catch(()=>({results:[]}))
-    ]);
+
     const results = [
-      ...(movData.results||[]).map(r=>({
+      ...(itunesData.results||[]).map(r=>({
         title: r.trackName || r.collectionName || '',
         director: r.artistName || '',
         year: r.releaseDate ? r.releaseDate.slice(0,4) : '',
-        kind: r.kind || 'feature-movie',
-        thumb: (r.artworkUrl100||'').replace('100x100','200x200')
+        kind: 'movie',
+        thumb: (r.artworkUrl100||'').replace('100x100bb','400x400bb')
       })),
-      ...(tvData.results||[]).map(r=>({
+      ...(aniData.results||[]).map(r=>({
         title: r.collectionName || r.trackName || '',
         director: r.artistName || '',
         year: r.releaseDate ? r.releaseDate.slice(0,4) : '',
-        kind: 'tv-season',
-        thumb: (r.artworkUrl100||'').replace('100x100','200x200')
+        kind: 'tv',
+        thumb: (r.artworkUrl100||'').replace('100x100bb','400x400bb')
       }))
     ].filter(r=>r.title).slice(0,8);
 
     if(!results.length) {
-      candEl.style.display = 'none'; // 本は候補なしのとき非表示
+      candEl.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">候補が見つかりませんでした。<br>タイトル・監督・公開年を直接入力してください。</div>';
       return;
     }
     candEl._videos = results;
     candEl.innerHTML = results.map((r,i) => {
-      const kindLabel = r.kind==='tv-season' ? 'ドラマ・TV' : '映画・アニメ';
-      const kindIcon  = r.kind==='tv-season' ? 'tv' : 'movie';
+      const kindIcon = r.kind==='tv' ? 'tv' : 'movie';
+      const kindLabel = r.kind==='tv' ? 'ドラマ・TV' : '映画・アニメ';
       const thumbHTML = r.thumb
         ? `<img class="book-cand-thumb" src="${r.thumb}" alt="" onerror="this.style.display='none'">`
         : `<div class="book-cand-thumb-empty"><span class="mi mi-sm">${kindIcon}</span></div>`;
@@ -1461,7 +1474,7 @@ async function searchVideos(q) {
       </div>`;
     }).join('');
   } catch(e) {
-    candEl.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました</div>';
+    candEl.innerHTML = '<div style="padding:12px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました。直接入力してください。</div>';
   }
 }
 
@@ -1532,6 +1545,19 @@ window.addEventListener('popstate', e => {
 
 // 初期状態の履歴を積む
 history.pushState({}, '');
+
+// fTitleからフォーカスが外れたら候補を閉じる（200ms遅延でタップ選択を保護）
+document.addEventListener('DOMContentLoaded', () => {
+  const fTitle = document.getElementById('fTitle');
+  if(fTitle) {
+    fTitle.addEventListener('blur', () => {
+      setTimeout(() => {
+        const cand = document.getElementById('bookCandidates');
+        if(cand) cand.style.display = 'none';
+      }, 200);
+    });
+  }
+});
 // ─── 初期化 ───
 async function init() {
   loadItems();
