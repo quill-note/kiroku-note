@@ -1389,7 +1389,7 @@ async function searchBooks(q) {
   candEl.style.display = 'block';
   candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>');
   try {
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8`;
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8&langRestrict=ja`;
     const res = await fetch(url);
     const data = await res.json();
     const bookItems = data.items || [];
