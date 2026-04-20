@@ -911,6 +911,7 @@ function openAddModal() {
   document.getElementById('bookCandidates')._videos = null;
   updateBookSearch();
   document.getElementById('editModal').classList.add('active');
+  pushState({modal:'edit'});
   setTimeout(()=>document.getElementById('fTitle').focus(),100);
 }
 function openEdit(id) {
@@ -935,6 +936,7 @@ function openEdit(id) {
   updateBookSearch();
   if(it.coverUrl){document.getElementById('coverPreviewWrap').style.display='block';document.getElementById('coverPreviewImg').src=it.coverUrl;}else{document.getElementById('coverPreviewWrap').style.display='none';}
   document.getElementById('editModal').classList.add('active');
+  pushState({modal:'edit'});
 }
 function closeModal() {
   document.getElementById('editModal').classList.remove('active');
@@ -1086,6 +1088,7 @@ function onSearchInput() {
 function openBackupModal() {
   renderBackupUI();
   document.getElementById('backupModal').classList.add('active');
+  pushState({modal:'backup'});
 }
 function closeBackupModal() {
   document.getElementById('backupModal').classList.remove('active');
@@ -1481,6 +1484,54 @@ function selectVideo(i) {
   }
   candEl.style.display = 'none';
 }
+
+// ─── 戻るボタン対応 ───
+function pushState(state) {
+  history.pushState(state, '');
+}
+
+window.addEventListener('popstate', e => {
+  const state = e.state;
+  // モーダルが開いていれば閉じる
+  if(document.getElementById('editModal').classList.contains('active')) {
+    closeModal(); return;
+  }
+  if(document.getElementById('backupModal').classList.contains('active')) {
+    closeBackupModal(); return;
+  }
+  if(document.getElementById('statsListModal').classList.contains('active')) {
+    closeStatsListModal(); return;
+  }
+  if(document.getElementById('confirmOverlay').classList.contains('active')) {
+    closeConfirm(); return;
+  }
+  // 統計ページ表示中なら리스트に戻る
+  if(document.getElementById('pageStats').classList.contains('active')) {
+    const listBtn = document.querySelector('.nav-item');
+    showNav('list', listBtn);
+    return;
+  }
+  // ランキングページ表示中ならリストに戻る
+  if(document.getElementById('pageRank').classList.contains('active')) {
+    setTab('want', document.querySelector('.tab'));
+    return;
+  }
+  // 検索バーが開いていれば閉じる
+  if(document.getElementById('searchBarWrap').style.display !== 'none') {
+    closeSearch(); return;
+  }
+  // ヘッダーが絞り込み中なら戻す
+  const headerTitle = document.getElementById('headerTitle');
+  if(headerTitle.onclick) {
+    headerTitle.onclick();
+    return;
+  }
+  // それ以外は履歴を積み直して終了を防ぐ
+  history.pushState({}, '');
+});
+
+// 初期状態の履歴を積む
+history.pushState({}, '');
 // ─── 初期化 ───
 async function init() {
   loadItems();
