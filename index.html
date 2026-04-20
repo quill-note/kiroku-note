@@ -16,13 +16,13 @@
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 <style>
   :root {
-    --primary: #e87b6b;
+    --primary: #e88c80; /* 画像のピンク色に近い色 */
     --primary-dark: #d66a5a;
-    --bg: #f8f9fa;
+    --bg: #f5f5f5;
     --text: #333;
     --text-light: #666;
     --card-bg: #fff;
-    --shadow: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow: 0 4px 15px rgba(0,0,0,0.08);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
@@ -34,17 +34,17 @@
     line-height: 1.6;
   }
   header {
-    background: var(--primary);
-    color: #fff;
+    background: #fff;
+    color: var(--text);
     padding: 16px;
     position: sticky; top: 0; z-index: 100;
-    box-shadow: var(--shadow);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     display: flex; justify-content: space-between; align-items: center;
   }
-  header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; cursor: pointer; }
+  header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; cursor: pointer; color: var(--primary); }
   .header-actions { display: flex; gap: 12px; }
   .icon-btn {
-    background: none; border: none; color: #fff; cursor: pointer;
+    background: none; border: none; color: var(--text-light); cursor: pointer;
     display: flex; align-items: center; justify-content: center;
   }
   #searchBarWrap {
@@ -83,59 +83,117 @@
   }
   .card-meta { font-size: 0.75rem; color: var(--text-light); }
   .card-stars { color: #f1c40f; font-size: 0.75rem; margin-top: auto; }
+  
+  /* 追加ボタン */
   .add-btn {
     position: fixed; bottom: 24px; right: 24px;
     width: 60px; height: 60px; border-radius: 30px;
     background: var(--primary); color: #fff;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 20px rgba(232,123,107,0.4);
+    box-shadow: 0 4px 20px rgba(232,140,128,0.4);
     border: none; cursor: pointer; z-index: 100;
   }
+
+  /* モーダル基本構造 */
   .modal {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-    display: none; align-items: center; justify-content: center; z-index: 200;
+    position: fixed; inset: 0; 
+    background: rgba(0,0,0,0.5);
+    display: none; 
+    align-items: center; 
+    justify-content: center; 
+    z-index: 200;
     padding: 16px;
   }
   .modal-content {
-    background: #fff; border-radius: 16px; width: 100%; max-width: 450px;
-    max-height: 90vh; overflow-y: auto; padding: 20px;
-    position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    background: #fff; 
+    border-radius: 20px; 
+    width: 100%; 
+    max-width: 450px;
+    max-height: 85vh; 
+    overflow-y: auto; 
+    padding: 24px;
+    position: relative; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
   }
-  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  .modal-header h2 { margin: 0; font-size: 1.1rem; }
-  .form-group { margin-bottom: 16px; position: relative; }
-  .form-label { display: block; font-size: 0.85rem; color: var(--text-light); margin-bottom: 6px; font-weight: 600; }
+  .modal-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 20px; 
+  }
+  .modal-header h2 { margin: 0; font-size: 1.15rem; color: #333; }
+
+  /* フォーム要素 */
+  .form-group { margin-bottom: 16px; width: 100%; }
+  .form-label { 
+    display: block; 
+    font-size: 0.85rem; 
+    color: var(--text); 
+    margin-bottom: 6px; 
+    font-weight: 600; 
+  }
   .form-input {
-    width: 100%; padding: 12px; border: 1.5px solid #eee;
-    border-radius: 8px; font-size: 1rem; outline: none;
+    width: 100%; 
+    padding: 12px; 
+    border: 1px solid #eee;
+    border-radius: 10px; 
+    font-size: 0.95rem; 
+    outline: none;
+    background: #fafafa;
     font-family: inherit;
+    transition: background 0.2s;
   }
-  .form-input:focus { border-color: var(--primary); }
-  .star-select { font-size: 1.8rem; color: #ddd; cursor: pointer; }
+  .form-input:focus { background: #f0f0f0; border-color: #ddd; }
+  
+  .star-select { font-size: 1.8rem; color: #ddd; cursor: pointer; margin-top: 4px; }
   .star-btn.active { color: #f1c40f; }
-  .modal-footer { display: flex; gap: 12px; margin-top: 24px; }
-  .btn {
-    flex: 1; padding: 12px; border-radius: 8px; border: none;
-    font-weight: 600; cursor: pointer; font-family: inherit; font-size: 1rem;
+
+  /* フッターボタン */
+  .modal-footer { 
+    display: flex; 
+    gap: 12px; 
+    margin-top: 10px; 
+    padding-top: 10px;
   }
-  .btn-cancel { background: #f1f3f4; color: var(--text); }
+  .btn {
+    flex: 1; 
+    padding: 14px; 
+    border-radius: 12px; 
+    border: none;
+    font-weight: 700; 
+    cursor: pointer; 
+    font-family: inherit; 
+    font-size: 0.95rem;
+  }
+  .btn-cancel { background: #f0f0f0; color: #666; }
   .btn-save { background: var(--primary); color: #fff; }
-  .btn-delete { background: #fee; color: #e74c3c; width: 100%; margin-top: 12px; }
+  .btn-delete { 
+    background: none; 
+    color: #e74c3c; 
+    width: 100%; 
+    margin-top: 16px; 
+    font-size: 0.85rem;
+    text-decoration: underline;
+  }
+
+  /* 入力欄の補助表示 */
   .book-candidates {
     position: absolute; top: 100%; left: 0; right: 0;
     background: #fff; border: 1px solid #ddd; border-top: none;
     z-index: 300; max-height: 200px; overflow-y: auto;
-    border-radius: 0 0 8px 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    border-radius: 0 0 10px 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     display: none;
   }
   .cand-item {
     padding: 10px; border-bottom: 1px solid #eee; display: flex; gap: 10px; cursor: pointer;
   }
-  .cand-item:last-child { border-bottom: none; }
   .cand-item img { width: 40px; height: 60px; object-fit: cover; border-radius: 4px; }
   .cand-info { display: flex; flex-direction: column; justify-content: center; }
   .cand-title { font-size: 0.85rem; font-weight: 600; }
   .cand-author { font-size: 0.75rem; color: var(--text-light); }
+  
   .toast {
     position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
     background: rgba(0,0,0,0.8); color: #fff; padding: 8px 16px;
@@ -168,35 +226,38 @@
 <div class="modal" id="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h2 id="modalTitle">新しい記録</h2>
-      <button class="icon-btn" style="color:#999" onclick="closeModal()">
+      <h2 id="modalTitle">記録を追加</h2>
+      <button class="icon-btn" style="color:#ccc" onclick="closeModal()">
         <span class="material-icons-round">close</span>
       </button>
     </div>
+    
     <input type="hidden" id="fId">
     
-    <div style="display:flex; gap:12px; margin-bottom:16px;">
-      <div style="flex:1; position:relative; min-width: 0;">
-        <label class="form-label">タイトル</label>
-        <input class="form-input" id="fTitle" placeholder="タイトルを入力..." autocomplete="off">
-        <div id="bookCandidates" class="book-candidates"></div>
-      </div>
-      <div style="width:70px;">
-        <label class="form-label">画像</label>
-        <img id="fImgPreview" src="" style="width:100%; aspect-ratio:2/3; object-fit:cover; border-radius:4px; background:#f0f0f0; border:1px solid #eee; cursor:pointer;" onclick="triggerFile()">
-        <input type="file" id="fFile" hidden accept="image/*" onchange="onFileChange(this)">
-        <input type="hidden" id="fImgBase64">
+    <div class="form-group">
+      <div style="display:flex; gap:12px;">
+        <div style="flex:1; position:relative; min-width: 0;">
+          <label class="form-label">タイトル *</label>
+          <input class="form-input" id="fTitle" placeholder="タイトルを入力" autocomplete="off">
+          <div id="bookCandidates" class="book-candidates"></div>
+        </div>
+        <div style="width:64px;">
+          <label class="form-label">画像</label>
+          <img id="fImgPreview" src="" style="width:100%; aspect-ratio:2/3; object-fit:cover; border-radius:8px; background:#f5f5f5; border:1px solid #eee; cursor:pointer;" onclick="triggerFile()">
+          <input type="file" id="fFile" hidden accept="image/*" onchange="onFileChange(this)">
+          <input type="hidden" id="fImgBase64">
+        </div>
       </div>
     </div>
 
     <div class="form-group">
-      <label class="form-label">著者</label>
-      <input class="form-input" id="fAuthor" placeholder="著者名など">
+      <label class="form-label">作者 / 監督など</label>
+      <input class="form-input" id="fAuthor" placeholder="省略可">
     </div>
 
     <div class="form-group">
       <label class="form-label">評価</label>
-      <div class="star-select" id="starSelect" style="display:flex;gap:4px">
+      <div class="star-select" id="starSelect" style="display:flex; gap:6px">
         <span class="star-btn" data-idx="1" onclick="onStarTap(event,1)">★</span>
         <span class="star-btn" data-idx="2" onclick="onStarTap(event,2)">★</span>
         <span class="star-btn" data-idx="3" onclick="onStarTap(event,3)">★</span>
@@ -207,40 +268,37 @@
 
     <div class="form-group">
       <label class="form-label">タグ（スペース区切り）</label>
-      <input class="form-input" id="fTags" placeholder="読書 2024 推し">
+      <input class="form-input" id="fTags" placeholder="例：ミステリー BL 泣ける">
     </div>
 
     <div class="form-group">
       <label class="form-label">メモ</label>
-      <textarea class="form-input" id="fMemo" rows="4" style="resize:none;"></textarea>
+      <textarea class="form-input" id="fMemo" rows="3" style="resize:none;" placeholder="感想などを自由に..."></textarea>
     </div>
 
     <div class="modal-footer">
       <button class="btn btn-cancel" onclick="closeModal()">キャンセル</button>
       <button class="btn btn-save" onclick="saveItem()">保存する</button>
     </div>
-    <button id="delBtn" class="btn btn-delete" style="display:none;" onclick="deleteItem()">このデータを削除する</button>
+    <button id="delBtn" class="btn btn-delete" style="display:none;" onclick="deleteItem()">この記録を削除する</button>
   </div>
 </div>
 
 <div id="toast" class="toast"></div>
 
 <script>
+// JavaScript部分は元のロジックを維持
 const STORE_KEY = 'my_records_v1';
 let items = [];
 let currentRating = 0;
 
-// IndexedDB 設定 (画像保存用)
 const DB_NAME = 'RecordAppDB';
-const DB_VERSION = 1;
 const OBJ_STORE = 'images';
 
 function openDB() {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = e => {
-      e.target.result.createObjectStore(OBJ_STORE);
-    };
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onupgradeneeded = e => e.target.result.createObjectStore(OBJ_STORE);
     request.onsuccess = e => resolve(e.target.result);
     request.onerror = e => reject(e.target.error);
   });
@@ -248,31 +306,23 @@ function openDB() {
 
 async function saveToIDB(id, base64) {
   const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(OBJ_STORE, 'readwrite');
-    tx.objectStore(OBJ_STORE).put(base64, id);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
+  const tx = db.transaction(OBJ_STORE, 'readwrite');
+  tx.objectStore(OBJ_STORE).put(base64, id);
 }
 
 async function getFromIDB(id) {
   const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(OBJ_STORE, 'readonly');
-    const request = tx.objectStore(OBJ_STORE).get(id);
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
+  return new Promise(resolve => {
+    const req = db.transaction(OBJ_STORE, 'readonly').objectStore(OBJ_STORE).get(id);
+    req.onsuccess = () => resolve(req.result);
   });
 }
 
 async function deleteFromIDB(id) {
   const db = await openDB();
-  const tx = db.transaction(OBJ_STORE, 'readwrite');
-  tx.objectStore(OBJ_STORE).delete(id);
+  db.transaction(OBJ_STORE, 'readwrite').objectStore(OBJ_STORE).delete(id);
 }
 
-// データ管理
 function loadItems() {
   const data = localStorage.getItem(STORE_KEY);
   items = data ? JSON.parse(data) : [];
@@ -287,22 +337,15 @@ async function render(filterItems = null) {
   const target = filterItems || items;
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
-  
-  // 降順
   const sorted = [...target].sort((a,b) => b.updatedAt - a.updatedAt);
 
   for (const item of sorted) {
     const card = document.createElement('div');
     card.className = 'card';
     card.onclick = () => openEditModal(item.id);
-
-    let imgSrc = '';
-    if(item.hasImg) {
-      imgSrc = await getFromIDB(item.id) || '';
-    }
-
+    const imgSrc = item.hasImg ? await getFromIDB(item.id) : '';
     card.innerHTML = `
-      <img class="card-img" src="${imgSrc || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%22100%%22 height=%22100%%22 fill=%22%23eee%22/><text x=%2250%%22 y=%2250%%22 font-family=%22sans-serif%22 font-size=%2212%22 fill=%22%23ccc%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>No Image</text></svg>'}">
+      <img class="card-img" src="${imgSrc || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22><rect width=%22100%%22 height=%22100%%22 fill=%22%23eee%22/></svg>'}">
       <div class="card-content">
         <div class="card-title">${escapeHtml(item.title)}</div>
         <div class="card-meta">${item.author ? escapeHtml(item.author) : ''}</div>
@@ -318,9 +361,8 @@ function escapeHtml(str) {
   return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
-// モーダル操作
 function openAddModal() {
-  document.getElementById('modalTitle').innerText = '新しい記録';
+  document.getElementById('modalTitle').innerText = '記録を追加';
   document.getElementById('fId').value = '';
   document.getElementById('fTitle').value = '';
   document.getElementById('fAuthor').value = '';
@@ -336,89 +378,55 @@ function openAddModal() {
 async function openEditModal(id) {
   const item = items.find(i => i.id === id);
   if(!item) return;
-
-  document.getElementById('modalTitle').innerText = '編集';
+  document.getElementById('modalTitle').innerText = '記録を編集';
   document.getElementById('fId').value = item.id;
   document.getElementById('fTitle').value = item.title;
   document.getElementById('fAuthor').value = item.author || '';
   document.getElementById('fTags').value = item.tags ? item.tags.join(' ') : '';
   document.getElementById('fMemo').value = item.memo || '';
-  
   const imgSrc = await getFromIDB(item.id);
   document.getElementById('fImgPreview').src = imgSrc || '';
   document.getElementById('fImgBase64').value = imgSrc || '';
-  
   setStars(item.rating);
   document.getElementById('delBtn').style.display = 'block';
   document.getElementById('modal').style.display = 'flex';
 }
 
-function closeModal() {
-  document.getElementById('modal').style.display = 'none';
-}
-
-// 星評価
-function onStarTap(e, val) {
-  setStars(val);
-}
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
 function setStars(val) {
   currentRating = val;
-  const stars = document.querySelectorAll('.star-btn');
-  stars.forEach(s => {
-    const idx = parseInt(s.dataset.idx);
-    s.classList.toggle('active', idx <= val);
+  document.querySelectorAll('.star-btn').forEach(s => {
+    s.classList.toggle('active', parseInt(s.dataset.idx) <= val);
   });
 }
+function onStarTap(e, val) { setStars(val); }
 
-// 画像処理
 function triggerFile() { document.getElementById('fFile').click(); }
 function onFileChange(input) {
   if (input.files && input.files[0]) {
     const reader = new FileReader();
     reader.onload = e => {
-      const base64 = e.target.result;
-      document.getElementById('fImgPreview').src = base64;
-      document.getElementById('fImgBase64').value = base64;
+      document.getElementById('fImgPreview').src = e.target.result;
+      document.getElementById('fImgBase64').value = e.target.result;
     };
     reader.readAsDataURL(input.files[0]);
   }
 }
 
-// 保存
 async function saveItem() {
-  const id = document.getElementById('fId').value || 'id_' + Date.now();
   const title = document.getElementById('fTitle').value.trim();
   if(!title) { showToast('タイトルを入力してください'); return; }
-
-  const author = document.getElementById('fAuthor').value.trim();
-  const tagsStr = document.getElementById('fTags').value.trim();
-  const tags = tagsStr ? tagsStr.split(/\s+/) : [];
-  const memo = document.getElementById('fMemo').value.trim();
+  const id = document.getElementById('fId').value || 'id_' + Date.now();
   const imgBase64 = document.getElementById('fImgBase64').value;
-
-  const existingIdx = items.findIndex(i => i.id === id);
   const newItem = {
-    id, title, author, rating: currentRating, tags, memo,
-    hasImg: !!imgBase64,
-    updatedAt: Date.now()
+    id, title, author: document.getElementById('fAuthor').value.trim(),
+    rating: currentRating, tags: document.getElementById('fTags').value.trim().split(/\s+/).filter(t=>t),
+    memo: document.getElementById('fMemo').value.trim(), hasImg: !!imgBase64, updatedAt: Date.now()
   };
-
-  if(imgBase64) {
-    await saveToIDB(id, imgBase64);
-  } else {
-    await deleteFromIDB(id);
-  }
-
-  if(existingIdx > -1) {
-    items[existingIdx] = newItem;
-  } else {
-    items.push(newItem);
-  }
-
-  saveItems();
-  closeModal();
-  render();
-  showToast('保存しました');
+  if(imgBase64) await saveToIDB(id, imgBase64);
+  const idx = items.findIndex(i => i.id === id);
+  if(idx > -1) items[idx] = newItem; else items.push(newItem);
+  saveItems(); closeModal(); render(); showToast('保存しました');
 }
 
 async function deleteItem() {
@@ -426,29 +434,18 @@ async function deleteItem() {
   const id = document.getElementById('fId').value;
   items = items.filter(i => i.id !== id);
   await deleteFromIDB(id);
-  saveItems();
-  closeModal();
-  render();
-  showToast('削除しました');
+  saveItems(); closeModal(); render(); showToast('削除しました');
 }
 
-// 検索
 function toggleSearch() {
-  const wrap = document.getElementById('searchBarWrap');
-  const isShow = wrap.style.display === 'block';
-  wrap.style.display = isShow ? 'none' : 'block';
-  if(!isShow) document.getElementById('searchInput').focus();
+  const w = document.getElementById('searchBarWrap');
+  w.style.display = (w.style.display === 'block') ? 'none' : 'block';
+  if(w.style.display === 'block') document.getElementById('searchInput').focus();
 }
 
 function onSearchInput() {
   const q = document.getElementById('searchInput').value.toLowerCase();
-  if(!q) { render(); return; }
-  const filtered = items.filter(i => {
-    return i.title.toLowerCase().includes(q) || 
-           (i.author && i.author.toLowerCase().includes(q)) ||
-           (i.tags && i.tags.some(t => t.toLowerCase().includes(q)));
-  });
-  render(filtered);
+  render(q ? items.filter(i => i.title.toLowerCase().includes(q) || (i.tags && i.tags.some(t => t.toLowerCase().includes(q)))) : null);
 }
 
 function resetFilter() {
@@ -457,88 +454,13 @@ function resetFilter() {
   render();
 }
 
-// 簡易トースト
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.innerText = msg;
-  t.style.opacity = 1;
+  t.innerText = msg; t.style.opacity = 1;
   setTimeout(() => t.style.opacity = 0, 2000);
 }
 
-// 書籍検索候補 (Google Books API)
-let timer;
-document.getElementById('fTitle').addEventListener('input', (e) => {
-  clearTimeout(timer);
-  const q = e.target.value.trim();
-  if(q.length < 2) {
-    document.getElementById('bookCandidates').style.display = 'none';
-    return;
-  }
-  timer = setTimeout(() => fetchBooks(q), 500);
-});
-
-async function fetchBooks(q) {
-  try {
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=5`);
-    const data = await res.json();
-    if(!data.items) return;
-    
-    const cand = document.getElementById('bookCandidates');
-    cand.innerHTML = '';
-    data.items.forEach(b => {
-      const info = b.volumeInfo;
-      const title = info.title;
-      const author = info.authors ? info.authors[0] : '';
-      const thumb = info.imageLinks ? info.imageLinks.thumbnail.replace('http:','https:') : '';
-      
-      const item = document.createElement('div');
-      item.className = 'cand-item';
-      item.onclick = () => selectBook(title, author, thumb);
-      item.innerHTML = `
-        <img src="${thumb || ''}">
-        <div class="cand-info">
-          <div class="cand-title">${escapeHtml(title)}</div>
-          <div class="cand-author">${escapeHtml(author)}</div>
-        </div>
-      `;
-      cand.appendChild(item);
-    });
-    cand.style.display = 'block';
-  } catch(e) {}
-}
-
-async function selectBook(title, author, thumb) {
-  document.getElementById('fTitle').value = title;
-  document.getElementById('fAuthor').value = author;
-  document.getElementById('bookCandidates').style.display = 'none';
-  
-  if(thumb) {
-    // URLから画像をフェッチしてBase64に変換しプレビュー
-    try {
-      const response = await fetch(thumb);
-      const blob = await response.blob();
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        document.getElementById('fImgPreview').src = reader.result;
-        document.getElementById('fImgBase64').value = reader.result;
-      }
-      reader.readAsDataURL(blob);
-    } catch(err) {
-      console.error('Image fetch failed', err);
-    }
-  }
-}
-
-// 候補閉じる
-document.addEventListener('click', (e) => {
-  if(!e.target.closest('#fTitle') && !e.target.closest('#bookCandidates')) {
-    document.getElementById('bookCandidates').style.display = 'none';
-  }
-});
-
-// 初期化
 loadItems();
 </script>
-
 </body>
 </html>
