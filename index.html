@@ -1554,12 +1554,18 @@ async function searchBooks(q) {
     const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(q)}&maxResults=10${gbKey ? '&key='+gbKey : ''}`;
     const res = await fetch(url);
     const data = await res.json();
-    // タイトルにクエリが含まれるものだけ表示
     const q_lower = q.toLowerCase();
-    const bookItems = (data.items || []).filter(item => {
+    const allMatched = (data.items || []).filter(item => {
       const t = (item.volumeInfo?.title || '').toLowerCase();
       return t.includes(q_lower) || q_lower.split(/\s+/).some(w => w.length > 1 && t.includes(w));
-    }).slice(0, 8);
+    });
+    // スコアリング：完全一致・前方一致を優先、単話・分冊を下位に
+    const bookItems = allMatched.map(item => {
+      const t = (item.volumeInfo?.title || '').toLowerCase();
+      let score = t === q_lower ? 100 : t.startsWith(q_lower) ? 80 : t.includes(q_lower) ? 60 : 40;
+      if(t.includes('単話') || t.includes('分冊')) score -= 30;
+      return { item, score };
+    }).sort((a, b) => b.score - a.score).map(s => s.item).slice(0, 8);
     let apiHTML = '';
     if(!bookItems.length) {
       apiHTML = '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>';
