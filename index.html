@@ -1553,7 +1553,7 @@ async function searchBooks(q) {
   try {
     const gbKey = localStorage.getItem('gbooks-api-key') || '';
   const tmdbKey = localStorage.getItem('tmdb-api-key') || '';
-    const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(q)}&maxResults=10${gbKey ? '&key='+gbKey : ''}`;
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=15${gbKey ? '&key='+gbKey : ''}`;
     const res = await fetch(url);
     const data = await res.json();
     const q_lower = q.toLowerCase();
