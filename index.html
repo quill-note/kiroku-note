@@ -1578,8 +1578,10 @@ async function searchBooks(q) {
     // 全角・記号を正規化して比較
     const normalize = s => s.toLowerCase()
       .replace(/[－ー―‐]/g, '-')
+      .replace(/[・･•]/g, '')
       .replace(/[　 ]+/g, ' ')
       .replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+      .replace(/[\s\-・]+/g, '')
       .toLowerCase();
     const q_norm = normalize(q);
     const rawItems = data.items || [];
