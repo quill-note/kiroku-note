@@ -331,7 +331,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
   <div class="header-top">
     <h1 id="headerTitle"><span class="mi">bookmarks</span> 記録ノート</h1>
     <div class="header-actions">
-      <button class="btn-icon" onclick="openBackupModal()" title="バックアップ設定"><span class="mi mi-sm">cloud_sync</span></button>
+      <button class="btn-icon" id="sortBtn" onclick="openSortSheet()" title="並び替え"><span class="mi mi-sm">sort</span></button>
       <button class="btn-icon" id="privacyBtn" onclick="togglePrivacy()" title="プライバシーモード"><span class="mi mi-sm">lock_open</span></button>
       <button class="btn-icon" id="searchBtn" onclick="toggleSearch()" title="検索"><span class="mi mi-sm">search</span></button>
     </div>
@@ -375,6 +375,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 <!-- ページ: 統計 -->
 <div class="page" id="pageStats">
   <div id="statsContent" style="padding:16px;display:flex;flex-direction:column;gap:14px"></div>
+  <div style="padding:0 16px 24px;text-align:center"><button onclick="openBackupModal()" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px"><span class="mi" style="font-size:14px">cloud_sync</span> バックアップ設定</button></div>
 </div>
 
 <!-- FAB -->
@@ -505,6 +506,18 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
     <div style="margin-top:16px">
       <button class="btn-secondary" style="width:100%;padding:10px" onclick="closeBackupModal()">閉じる</button>
     </div>
+  </div>
+</div>
+
+
+<!-- 並び替えシート -->
+<div id="sortSheet" style="display:none;position:fixed;inset:0;background:rgba(74,37,37,0.35);z-index:300;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeSortSheet()">
+  <div style="background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 0 32px">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 12px">
+      <div style="font-size:16px;font-weight:700;color:var(--text)">並び順</div>
+      <button onclick="closeSortSheet()" style="background:none;border:none;cursor:pointer;color:var(--text3)"><span class="mi">close</span></button>
+    </div>
+    <div id="sortOptions"></div>
   </div>
 </div>
 
@@ -776,7 +789,7 @@ function render() {
     list.innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">inbox</span></div><p>まだ登録がありません。<br>右下の＋ボタンから追加しましょう！</p></div>`;
     return;
   }
-  list.innerHTML = filtered.map(it => cardHTML(it)).join('');
+  list.innerHTML = getSorted(filtered).map(it => cardHTML(it)).join('');
 }
 
 function renderStats() {
@@ -1414,7 +1427,7 @@ function showFilteredList(filterType, filterVal, label) {
   if(!filtered.length) {
     list.innerHTML = '<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">inbox</span></div><p>該当する作品がありません</p></div>';
   } else {
-    list.innerHTML = filtered.map(it => cardHTML(it)).join('');
+    list.innerHTML = getSorted(filtered).map(it => cardHTML(it)).join('');
   }
 }
 function closeStatsListModal() {
@@ -1588,6 +1601,73 @@ document.addEventListener('click', e => {
 });
 
 
+
+
+// ─── 並び替え ───
+let _sortKey = 'date'; // registered / date / star / title
+let _sortDir = { registered:'desc', date:'desc', star:'desc', title:'asc' };
+
+const SORT_OPTS = [
+  { key:'registered', label:'登録日', icons:['arrow_downward','arrow_upward'] },
+  { key:'date',       label:'読了・視聴日', icons:['arrow_downward','arrow_upward'] },
+  { key:'star',       label:'評価', icons:['arrow_downward','arrow_upward'] },
+  { key:'title',      label:'タイトル', icons:['sort_by_alpha','sort_by_alpha'] },
+];
+const DIR_LABEL = {
+  registered: { desc:'新しい順', asc:'古い順' },
+  date:       { desc:'新しい順', asc:'古い順' },
+  star:       { desc:'高い順',   asc:'低い順' },
+  title:      { asc:'昇順',      desc:'降順' },
+};
+
+function openSortSheet() {
+  const opts = document.getElementById('sortOptions');
+  opts.innerHTML = SORT_OPTS.map(o => {
+    const dir = _sortDir[o.key];
+    const isActive = _sortKey === o.key;
+    const dirLabel = DIR_LABEL[o.key][dir];
+    return `<div onclick="setSort('${o.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:${isActive?'var(--primary-pale)':''}">
+      <span style="font-size:15px;font-weight:${isActive?'700':'400'};color:${isActive?'var(--primary)':'var(--text)'}">${o.label}</span>
+      ${isActive ? `<span style="font-size:13px;color:var(--primary);font-weight:600">${dirLabel}</span>` : ''}
+    </div>`;
+  }).join('');
+  const sheet = document.getElementById('sortSheet');
+  sheet.style.display = 'flex';
+}
+function closeSortSheet() {
+  document.getElementById('sortSheet').style.display = 'none';
+}
+function setSort(key) {
+  if(_sortKey === key) {
+    _sortDir[key] = _sortDir[key] === 'asc' ? 'desc' : 'asc';
+  } else {
+    _sortKey = key;
+  }
+  closeSortSheet();
+  render();
+}
+function getSorted(arr) {
+  const dir = _sortDir[_sortKey];
+  return [...arr].sort((a, b) => {
+    if(_sortKey === 'registered') {
+      const av = a.createdAt||0, bv = b.createdAt||0;
+      return dir==='desc' ? bv-av : av-bv;
+    }
+    if(_sortKey === 'date') {
+      const toNum = d => d?.y ? Number(d.y)*10000+(Number(d.m||0))*100+Number(d.d||0) : 0;
+      const av=toNum(a.date), bv=toNum(b.date);
+      return dir==='desc' ? bv-av : av-bv;
+    }
+    if(_sortKey === 'star') {
+      const av=a.star||0, bv=b.star||0;
+      return dir==='desc' ? bv-av : av-bv;
+    }
+    if(_sortKey === 'title') {
+      return dir==='asc' ? a.title.localeCompare(b.title,'ja') : b.title.localeCompare(a.title,'ja');
+    }
+    return 0;
+  });
+}
 
 // ─── タグ補完 ───
 function getAllUsedTags() {
