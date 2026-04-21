@@ -37,6 +37,7 @@
   --radius-md: 12px;
   --radius-lg: 16px;
 }
+.sticky-top { position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px var(--shadow); }
 .mi { font-family: 'Material Icons Round'; font-style: normal; font-size: 20px; line-height: 1; vertical-align: middle; user-select: none; }
 .mi-sm { font-size: 16px; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,7 +48,6 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
   background: var(--surface);
   border-bottom: 2px solid var(--border);
   padding: 14px 16px 10px;
-  position: sticky; top: 0; z-index: 100;
   box-shadow: 0 2px 8px var(--shadow);
 }
 .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -66,7 +66,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .filter-chip.active { background: var(--primary); border-color: var(--primary); color: white; }
 
 /* タブ */
-.tabs { display: flex; background: var(--surface); border-bottom: 2px solid var(--border); position: sticky; top: var(--header-h, 0); z-index: 99; }
+.tabs { display: flex; background: var(--surface); border-bottom: 2px solid var(--border); }
 .tab { flex: 1; padding: 8px 4px; text-align: center; font-size: 12px; font-weight: 600; color: var(--text3); border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
 .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
 
@@ -77,9 +77,6 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
   border-bottom: 1px solid var(--border);
   overflow-x: auto; scrollbar-width: none;
   align-items: center; flex-wrap: wrap;
-  position: sticky;
-  top: calc(var(--header-h, 0px) + var(--tabs-h, 44px));
-  z-index: 98;
 }
 .stats-bar::-webkit-scrollbar { display: none; }
 .stat-item { flex-shrink: 0; display: flex; align-items: center; gap: 4px; }
@@ -333,6 +330,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 <body>
 
 <!-- ヘッダー -->
+<div class="sticky-top">
 <div class="header">
   <div class="header-top">
     <h1 id="headerTitle"><span class="mi">bookmarks</span> 記録ノート</h1>
@@ -371,6 +369,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 
 <!-- 統計 -->
 <div class="stats-bar" id="statsBar"></div>
+</div><!-- /sticky-top -->
 
 <!-- ページ: リスト -->
 <div class="page active" id="pageList">
@@ -1745,7 +1744,9 @@ async function selectVideo(i) {
 // ─── 初期化 ───
 function updateHeaderHeight() {
   const h = document.querySelector('.header')?.offsetHeight || 0;
+  const t = document.querySelector('.tabs')?.offsetHeight || 0;
   document.documentElement.style.setProperty('--header-h', h + 'px');
+  document.documentElement.style.setProperty('--tabs-h', t + 'px');
 }
 
 async function init() {
@@ -1914,7 +1915,9 @@ function getSorted(arr) {
 // ─── 初期化 ───
 function updateHeaderHeight() {
   const h = document.querySelector('.header')?.offsetHeight || 0;
+  const t = document.querySelector('.tabs')?.offsetHeight || 0;
   document.documentElement.style.setProperty('--header-h', h + 'px');
+  document.documentElement.style.setProperty('--tabs-h', t + 'px');
 }
 
 async function init() {
