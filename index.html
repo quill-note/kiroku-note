@@ -634,6 +634,7 @@ function renderBackupUI() {
     : token
     ? `<span style="color:var(--warn);font-weight:600"><span class="mi mi-sm">cloud_upload</span> トークン設定済（初回保存で接続）</span>`
     : `<span style="color:var(--text3)"><span class="mi mi-sm">cloud_off</span> 未設定</span>`;
+  const gbKey = localStorage.getItem('gbooks-api-key') || '';
   document.getElementById('backupSection').innerHTML = `
     <div style="font-size:12px;margin-bottom:8px">状態: ${statusHtml}</div>
     ${!token ? `
@@ -649,6 +650,15 @@ function renderBackupUI() {
       </div>
       <button onclick="clearGistToken()" class="btn-secondary" style="width:100%;padding:10px;font-size:12px">トークンをリセット</button>
     `}
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px"><span class="mi mi-sm">menu_book</span> 書影検索 APIキー（任意）</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.6">Google Books APIキーを設定すると書影・書誌情報を自動取得できます。<br>取得方法: <a href="https://console.cloud.google.com/" target="_blank" style="color:var(--primary)">Google Cloud Console</a> → Books API → 認証情報</div>
+      <div style="display:flex;gap:6px">
+        <input type="password" id="gbooksKeyInput" class="form-input" placeholder="AIzaSy..." value="${gbKey}" style="flex:1;font-size:12px">
+        <button onclick="saveGbooksKey()" class="btn-primary" style="padding:10px 12px;white-space:nowrap;font-size:12px">保存</button>
+      </div>
+      ${gbKey ? `<div style="font-size:11px;color:var(--success);margin-top:4px"><span class="mi mi-sm">check_circle</span> 設定済み</div>` : ''}
+    </div>
   `;
 }
 async function applyGistToken() {
@@ -672,6 +682,17 @@ async function restoreFromGist() {
   await saveToIDB(items);
   render();
   showToast('クラウドから復元しました','check_circle');
+}
+function saveGbooksKey() {
+  const key = document.getElementById('gbooksKeyInput').value.trim();
+  if(key) {
+    localStorage.setItem('gbooks-api-key', key);
+    showToast('APIキーを保存しました', 'check_circle');
+  } else {
+    localStorage.removeItem('gbooks-api-key');
+    showToast('APIキーを削除しました', 'delete');
+  }
+  renderBackupUI();
 }
 function clearGistToken() {
   if(!confirm('Gist連携を解除しますか？\nローカルのデータは消えません。')){ return; }
@@ -1389,37 +1410,33 @@ async function searchBooks(q) {
   candEl.style.display = 'block';
   candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>');
   try {
-    const url = `https://api.openbd.jp/v1/search?title=${encodeURIComponent(q)}&limit=8`;
+    const gbKey = localStorage.getItem('gbooks-api-key') || '';
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8${gbKey ? '&key='+gbKey : ''}`;
     const res = await fetch(url);
     const data = await res.json();
-    const hits = (data.data || []).filter(b => b);
+    const bookItems = (data.items || []);
     let apiHTML = '';
-    let books = [];
-    if(!hits.length) {
+    if(!bookItems.length) {
       apiHTML = '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>';
     } else {
-      books = hits.map(b => {
-        const summary = b.summary || {};
-        const title   = summary.title  || '';
-        const author  = summary.author || '';
-        const isbn    = summary.isbn   || '';
-        const coverUrl = isbn ? `https://cover.openbd.jp/${isbn}.jpg` : '';
-        return { title, author, coverUrl };
-      }).filter(b => b.title);
-      apiHTML = books.map((book, i) => {
-        const thumbHTML = book.coverUrl
-          ? `<img class="book-cand-thumb" src="${book.coverUrl}" alt="" onerror="this.style.display='none'">`
+      apiHTML = bookItems.map((item, i) => {
+        const info = item.volumeInfo || {};
+        const title = info.title || '';
+        const authors = (info.authors || []).join(', ');
+        const thumb = (info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '').replace('http:','https:');
+        const thumbHTML = thumb
+          ? `<img class="book-cand-thumb" src="${thumb}" alt="" onerror="this.style.display='none'">`
           : `<div class="book-cand-thumb-empty"><span class="mi mi-sm">menu_book</span></div>`;
         return `<div class="book-candidate" onclick="selectBook(${i})">
           ${thumbHTML}
           <div class="book-cand-info">
-            <div class="book-cand-title">${esc(book.title)}</div>
-            <div class="book-cand-author">${esc(book.author)}</div>
+            <div class="book-cand-title">${esc(title)}</div>
+            <div class="book-cand-author">${esc(authors)}</div>
           </div>
         </div>`;
       }).join('');
     }
-    candEl._books = books;
+    candEl._books = bookItems;
     candEl.innerHTML = buildCandidateHTML(q, apiHTML);
   } catch(e) {
     candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました</div>');
@@ -1428,15 +1445,18 @@ async function searchBooks(q) {
 
 function selectBook(i) {
   const candEl = document.getElementById('bookCandidates');
-  const books = candEl._books || [];
-  const book = books[i];
-  if(!book) return;
-  document.getElementById('fTitle').value = book.title || '';
-  if(book.author) document.getElementById('fAuthor').value = book.author;
-  _selectedCoverUrl = book.coverUrl || '';
-  if(book.coverUrl) {
+  const bookItems = candEl._books || [];
+  const item = bookItems[i];
+  if(!item) return;
+  const info = item.volumeInfo || {};
+  document.getElementById('fTitle').value = info.title || '';
+  const authors = (info.authors || []).join(', ');
+  if(authors) document.getElementById('fAuthor').value = authors;
+  const thumb = (info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '').replace('http:','https:');
+  _selectedCoverUrl = thumb;
+  if(thumb) {
     document.getElementById('coverPreviewWrap').style.display = 'block';
-    document.getElementById('coverPreviewImg').src = book.coverUrl;
+    document.getElementById('coverPreviewImg').src = thumb;
   } else {
     document.getElementById('coverPreviewWrap').style.display = 'none';
   }
