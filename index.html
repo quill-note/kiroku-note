@@ -1551,10 +1551,15 @@ async function searchBooks(q) {
   try {
     const gbKey = localStorage.getItem('gbooks-api-key') || '';
   const tmdbKey = localStorage.getItem('tmdb-api-key') || '';
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8${gbKey ? '&key='+gbKey : ''}`;
+    const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(q)}&maxResults=10${gbKey ? '&key='+gbKey : ''}`;
     const res = await fetch(url);
     const data = await res.json();
-    const bookItems = (data.items || []);
+    // タイトルにクエリが含まれるものだけ表示
+    const q_lower = q.toLowerCase();
+    const bookItems = (data.items || []).filter(item => {
+      const t = (item.volumeInfo?.title || '').toLowerCase();
+      return t.includes(q_lower) || q_lower.split(/\s+/).some(w => w.length > 1 && t.includes(w));
+    }).slice(0, 8);
     let apiHTML = '';
     if(!bookItems.length) {
       apiHTML = '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>';
