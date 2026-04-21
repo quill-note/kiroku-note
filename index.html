@@ -1570,35 +1570,30 @@ async function searchBooks(q) {
   candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>');
   try {
     const gbKey = localStorage.getItem('gbooks-api-key') || '';
-    const urls = [
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=15&orderBy=relevance${gbKey ? '&key='+gbKey : ''}`,
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=15${gbKey ? '&key='+gbKey : ''}`
-    ];
-    const results = await Promise.all(urls.map(u => fetch(u).then(r=>r.json()).catch(()=>({items:[]}))));
-    const seen = new Set();
-    const allData = results.flatMap(d => d.items||[]).filter(item => {
-      const id = item.id;
-      if(seen.has(id)) return false;
-      seen.add(id); return true;
-    });
-    const data = { items: allData };
-    // 結果が返ってきたとき、現在の入力値と一致するか確認（ずれていたら無視）
-    const currentQ = document.getElementById('fTitle')?.value.trim() || '';
-    if(currentQ !== q) return;
-    const q_lower = q.toLowerCase();
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20${gbKey ? '&key='+gbKey : ''}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    // 全角・記号を正規化して比較
+    const normalize = s => s.toLowerCase()
+      .replace(/[－ー―‐]/g, '-')
+      .replace(/[　 ]+/g, ' ')
+      .replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+    const q_norm = normalize(q);
     const rawItems = data.items || [];
     const matched = rawItems.filter(item => {
-      const t = (item.volumeInfo?.title || '').toLowerCase();
-      return t.includes(q_lower);
+      const t = normalize(item.volumeInfo?.title || '');
+      return t.includes(q_norm) || q_norm.split(/\s+/).filter(w=>w.length>1).some(w => t.includes(w));
+    }).sort((a, b) => {
+      const ta = normalize(a.volumeInfo?.title || '');
+      const tb = normalize(b.volumeInfo?.title || '');
+      const sa = ta.includes('単話') || ta.includes('分冊') ? -1 : 0;
+      const sb = tb.includes('単話') || tb.includes('分冊') ? -1 : 0;
+      if(sa !== sb) return sb - sa;
+      const scoreA = ta === q_norm ? 2 : ta.startsWith(q_norm) ? 1 : 0;
+      const scoreB = tb === q_norm ? 2 : tb.startsWith(q_norm) ? 1 : 0;
+      return scoreB - scoreA;
     });
-    const bookItems = (matched.length > 0 ? matched : rawItems)
-      .sort((a, b) => {
-        const ta = (a.volumeInfo?.title || '').toLowerCase();
-        const tb = (b.volumeInfo?.title || '').toLowerCase();
-        const sa = ta.includes('単話') || ta.includes('分冊') ? -1 : 0;
-        const sb = tb.includes('単話') || tb.includes('分冊') ? -1 : 0;
-        return sb - sa;
-      }).slice(0, 8);
+    const bookItems = matched.slice(0, 8);
     let apiHTML = '';
     if(!bookItems.length) {
       apiHTML = '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>';
@@ -1623,10 +1618,7 @@ async function searchBooks(q) {
     candEl._books = bookItems;
     candEl.innerHTML = buildCandidateHTML(q, apiHTML);
   } catch(e) {
-    const currentQ2 = document.getElementById('fTitle')?.value.trim() || '';
-    if(currentQ2 === q) {
-      candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました</div>');
-    }
+    candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました</div>');
   }
 }
 
