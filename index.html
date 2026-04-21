@@ -1511,9 +1511,9 @@ function onTitleInput() {
   candEl.innerHTML = buildCandidateHTML(q, null);
   if(q.length < 2) return;
   if(type === 'book') {
-    _bookSearchTimer = setTimeout(() => searchBooks(q), 400);
+    _bookSearchTimer = setTimeout(() => searchBooks(q), 600);
   } else if(type === 'video') {
-    _bookSearchTimer = setTimeout(() => searchVideos(q), 400);
+    _bookSearchTimer = setTimeout(() => searchVideos(q), 600);
   }
 }
 
@@ -1571,7 +1571,10 @@ async function searchBooks(q) {
   try {
     const gbKey = localStorage.getItem('gbooks-api-key') || '';
     const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20${gbKey ? '&key='+gbKey : ''}`;
-    const res = await fetch(url);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
     const data = await res.json();
     // 全角・記号を正規化して比較
     const normalize = s => s.toLowerCase()
@@ -1596,7 +1599,13 @@ async function searchBooks(q) {
     });
     const bookItems = matched.slice(0, 8);
     let apiHTML = '';
-    if(!bookItems.length) {
+    if(!bookItems.length && !candEl._retried) {
+      // 1回だけ2秒後にリトライ
+      candEl._retried = true;
+      candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">再検索中…</div>');
+      setTimeout(() => { candEl._retried = false; searchBooks(q); }, 2000);
+      return;
+    } else if(!bookItems.length) {
       apiHTML = '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>';
     } else {
       apiHTML = bookItems.map((item, i) => {
