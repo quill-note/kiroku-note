@@ -389,22 +389,6 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 <div class="modal-overlay" id="editModal">
   <div class="modal">
     <div class="modal-title"><span class="mi mi-sm">edit_note</span> <span id="modalTitleText">作品を追加</span></div>
-    <div class="form-group book-search-wrap" id="bookSearchWrap">
-      <label class="form-label">タイトル *</label>
-      <div style="display:flex;gap:6px;align-items:flex-start">
-        <div style="flex:1;position:relative">
-          <input class="form-input" id="fTitle" placeholder="タイトルを入力" oninput="onTitleInput()" autocomplete="off">
-          <div class="book-candidates" id="bookCandidates" style="display:none"></div>
-        </div>
-        <div id="coverPreviewWrap" style="display:none">
-          <img class="cover-preview" id="coverPreviewImg" src="" alt="表紙">
-        </div>
-      </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label" id="authorLabel">作者 / 監督など</label>
-      <input class="form-input" id="fAuthor" placeholder="省略可">
-    </div>
     <div style="display:flex;gap:10px">
       <div class="form-group" style="flex:1">
         <label class="form-label">種類</label>
@@ -421,6 +405,22 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
           <option value="done">読んだ・見た</option>
         </select>
       </div>
+    </div>
+    <div class="form-group book-search-wrap" id="bookSearchWrap">
+      <label class="form-label">タイトル *</label>
+      <div style="display:flex;gap:6px;align-items:flex-start">
+        <div style="flex:1;position:relative">
+          <input class="form-input" id="fTitle" placeholder="タイトルを入力" oninput="onTitleInput()" autocomplete="off">
+          <div class="book-candidates" id="bookCandidates" style="display:none"></div>
+        </div>
+        <div id="coverPreviewWrap" style="display:none">
+          <img class="cover-preview" id="coverPreviewImg" src="" alt="表紙">
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" id="authorLabel">作者 / 監督など</label>
+      <input class="form-input" id="fAuthor" placeholder="省略可">
     </div>
     <div class="form-group">
       <label class="form-label">評価</label>
