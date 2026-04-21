@@ -1494,9 +1494,6 @@ function updateBookSearch() {
 function onTitleInput() {
   const type = document.getElementById('fType').value;
   const q = document.getElementById('fTitle').value.trim();
-  // 「○○で追加」ラベルを常に最新値に更新
-  const lbl = document.getElementById('addAsIsLabel');
-  if(lbl) lbl.textContent = `「${q}」で追加`;
   clearTimeout(_bookSearchTimer);
   const candEl = document.getElementById('bookCandidates');
   // IME変換中は検索しない
@@ -1538,11 +1535,13 @@ function buildCandidateHTML(q, apiHTML) {
     if(matched.length) html += `<div style="border-top:1px solid var(--border);padding:4px 12px 2px"><span style="font-size:11px;color:var(--text3);font-weight:600;display:flex;align-items:center;gap:3px"><span class="mi" style="font-size:13px">search</span> 検索結果</span></div>`;
     html += apiHTML;
   }
+  // addAsIsボタンは常にinputの現在値を使う
+  const currentTitle = document.getElementById('fTitle')?.value.trim() || q;
   html += `<div style="border-top:1px solid var(--border)"></div>
-  <div class="book-candidate" id="addAsIsBtn" onclick="selectAsIs()">
+  <div class="book-candidate" onclick="selectAsIs()">
     <div class="book-cand-thumb-empty" style="background:var(--primary-pale)"><span class="mi mi-sm" style="color:var(--primary)">add_circle_outline</span></div>
     <div class="book-cand-info">
-      <div class="book-cand-title" id="addAsIsLabel" style="color:var(--primary)">「${esc(q)}」で追加</div>
+      <div class="book-cand-title" style="color:var(--primary)">「${esc(currentTitle)}」で追加</div>
       <div class="book-cand-author">候補を使わずこのまま登録</div>
     </div>
   </div>`;
@@ -1599,13 +1598,7 @@ async function searchBooks(q) {
     });
     const bookItems = matched.slice(0, 8);
     let apiHTML = '';
-    if(!bookItems.length && !candEl._retried) {
-      // 1回だけ2秒後にリトライ
-      candEl._retried = true;
-      candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">再検索中…</div>');
-      setTimeout(() => { candEl._retried = false; searchBooks(q); }, 2000);
-      return;
-    } else if(!bookItems.length) {
+    if(!bookItems.length) {
       apiHTML = '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>';
     } else {
       apiHTML = bookItems.map((item, i) => {
