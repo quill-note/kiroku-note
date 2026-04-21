@@ -1568,30 +1568,24 @@ async function searchBooks(q) {
   try {
     const gbKey = localStorage.getItem('gbooks-api-key') || '';
   const tmdbKey = localStorage.getItem('tmdb-api-key') || '';
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20${gbKey ? '&key='+gbKey : ''}` + '&orderBy=relevance';
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20&orderBy=relevance${gbKey ? '&key='+gbKey : ''}`;
     const res = await fetch(url);
     const data = await res.json();
     const q_lower = q.toLowerCase();
-    // 検索語を単語に分割（スペース・句読点で区切り）
-    const qWords = q_lower.split(/[\s　、。・]+/).filter(w => w.length > 0);
-    const allMatched = (data.items || []).filter(item => {
+    const rawItems = data.items || [];
+    // タイトルに検索語が含まれるものを優先、なければそのまま表示
+    const matched = rawItems.filter(item => {
       const t = (item.volumeInfo?.title || '').toLowerCase();
-      const a = (item.volumeInfo?.authors || []).join(' ').toLowerCase();
-      // 全単語が含まれているか、全体が含まれているか
-      const allWords = qWords.every(w => t.includes(w));
-      const fullMatch = t.includes(q_lower);
-      return fullMatch || allWords;
+      return t.includes(q_lower);
     });
-    // スコアリング：完全一致・前方一致を優先、単話・分冊を下位に
-    const bookItems = allMatched.length > 0
-      ? allMatched.map(item => {
-          const t = (item.volumeInfo?.title || '').toLowerCase();
-          let score = t === q_lower ? 100 : t.startsWith(q_lower) ? 80 : t.includes(q_lower) ? 60 : 40;
-          if(t.includes('単話') || t.includes('分冊')) score -= 30;
-          return { item, score };
-        }).sort((a, b) => b.score - a.score).map(s => s.item).slice(0, 8)
-      // 全部フィルタアウトされた場合はそのまま表示（フォールバック）
-      : (data.items || []).slice(0, 8);
+    const bookItems = (matched.length > 0 ? matched : rawItems)
+      .sort((a, b) => {
+        const ta = (a.volumeInfo?.title || '').toLowerCase();
+        const tb = (b.volumeInfo?.title || '').toLowerCase();
+        const sa = ta.includes('単話') || ta.includes('分冊') ? -1 : 0;
+        const sb = tb.includes('単話') || tb.includes('分冊') ? -1 : 0;
+        return sb - sa;
+      }).slice(0, 8);
     let apiHTML = '';
     if(!bookItems.length) {
       apiHTML = '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>';
