@@ -1020,6 +1020,7 @@ function openAddModal() {
   document.getElementById('bookCandidates')._videos = null;
   updateBookSearch();
   document.getElementById('editModal').classList.add('active');
+  pushModalState();
   setTimeout(()=>document.getElementById('fTitle').focus(),100);
 }
 function openEdit(id) {
@@ -1049,6 +1050,7 @@ function openEdit(id) {
   updateBookSearch();
   if(it.coverUrl){document.getElementById('coverPreviewWrap').style.display='block';document.getElementById('coverPreviewImg').src=it.coverUrl;}else{document.getElementById('coverPreviewWrap').style.display='none';}
   document.getElementById('editModal').classList.add('active');
+  pushModalState();
 }
 function closeModal() {
   document.getElementById('editModal').classList.remove('active');
@@ -1224,6 +1226,7 @@ function onSearchInput() {
 function openBackupModal() {
   renderBackupUI();
   document.getElementById('backupModal').classList.add('active');
+  pushModalState();
 }
 function closeBackupModal() {
   document.getElementById('backupModal').classList.remove('active');
@@ -1567,9 +1570,18 @@ async function searchBooks(q) {
   candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>');
   try {
     const gbKey = localStorage.getItem('gbooks-api-key') || '';
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20&orderBy=relevance${gbKey ? '&key='+gbKey : ''}`;
-    const res = await fetch(url);
-    const data = await res.json();
+    const urls = [
+      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=15&orderBy=relevance${gbKey ? '&key='+gbKey : ''}`,
+      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=15${gbKey ? '&key='+gbKey : ''}`
+    ];
+    const results = await Promise.all(urls.map(u => fetch(u).then(r=>r.json()).catch(()=>({items:[]}))));
+    const seen = new Set();
+    const allData = results.flatMap(d => d.items||[]).filter(item => {
+      const id = item.id;
+      if(seen.has(id)) return false;
+      seen.add(id); return true;
+    });
+    const data = { items: allData };
     // 結果が返ってきたとき、現在の入力値と一致するか確認（ずれていたら無視）
     const currentQ = document.getElementById('fTitle')?.value.trim() || '';
     if(currentQ !== q) return;
@@ -1793,6 +1805,40 @@ async function init() {
   updateHeaderHeight();
   window.addEventListener('resize', updateHeaderHeight);
 }
+
+// ─── ブラウザバック対応 ───
+function pushModalState() {
+  history.pushState({ modal: true }, '');
+}
+window.addEventListener('popstate', e => {
+  // モーダルが開いていたら閉じる
+  const editModal = document.getElementById('editModal');
+  const backupModal = document.getElementById('backupModal');
+  const sortSheet = document.getElementById('sortSheet');
+  const statsListModal = document.getElementById('statsListModal');
+  if(editModal?.classList.contains('active')) {
+    closeModal(); return;
+  }
+  if(backupModal?.classList.contains('active')) {
+    closeBackupModal(); return;
+  }
+  if(sortSheet?.style.display === 'flex') {
+    closeSortSheet(); return;
+  }
+  if(statsListModal?.classList.contains('active')) {
+    closeStatsListModal(); return;
+  }
+});
+
+
+// ブラウザバックでモーダルを閉じる
+window.addEventListener('popstate', e => {
+  const modal = document.getElementById('editModal');
+  if(modal && modal.classList.contains('active')) {
+    closeModal();
+  }
+});
+
 // ─── タグチップ ───
 let _tagList = [];
 
@@ -1901,6 +1947,7 @@ function openSortSheet() {
   }).join('');
   const sheet = document.getElementById('sortSheet');
   sheet.style.display = 'flex';
+  pushModalState();
 }
 function closeSortSheet() {
   document.getElementById('sortSheet').style.display = 'none';
