@@ -168,6 +168,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 }
 .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 4px; cursor: pointer; border: none; background: none; color: var(--text3); font-size: 10px; gap: 2px; transition: color 0.2s; }
 .nav-item.active { color: var(--primary); }
+.privacy-mode .stars { visibility: hidden; }
 .nav-icon { font-size: 22px; }
 
 /* ページ */
@@ -302,7 +303,9 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .star-half-base { color: #ddd; }
 
 .star-wrap { display:inline-block; cursor:pointer; }
-.star.half { color: #f0b429; opacity: 0.5; }
+.star-half-wrap { position:relative; display:inline-block; font-size:16px; }
+.star-half-fill { position:absolute; left:0; top:0; width:50%; overflow:hidden; color:#f0b429; }
+.star-half-base { color:#ddd; }
 
 .star-half-btn, .star-full-btn {
   font-size: 22px; cursor: pointer; color: #ddd;
@@ -329,6 +332,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
     <h1 id="headerTitle"><span class="mi">bookmarks</span> 記録ノート</h1>
     <div class="header-actions">
       <button class="btn-icon" onclick="openBackupModal()" title="バックアップ設定"><span class="mi mi-sm">cloud_sync</span></button>
+      <button class="btn-icon" id="privacyBtn" onclick="togglePrivacy()" title="プライバシーモード"><span class="mi mi-sm">lock_open</span></button>
       <button class="btn-icon" id="searchBtn" onclick="toggleSearch()" title="検索"><span class="mi mi-sm">search</span></button>
     </div>
   </div>
@@ -809,9 +813,13 @@ function getStatusLabel(status, type) {
 function starsHTML(n) {
   let html = '';
   for(let i=1; i<=5; i++){
-    if(n >= i) html += '<span class="star filled">★</span>';
-    else if(n >= i-0.5) html += '<span class="star half">★</span>';
-    else html += '<span class="star">☆</span>';
+    if(n >= i) {
+      html += '<span class="star filled">★</span>';
+    } else if(n >= i-0.5) {
+      html += '<span class="star-half-wrap"><span class="star-half-fill">★</span><span class="star-half-base">★</span></span>';
+    } else {
+      html += '<span class="star">☆</span>';
+    }
   }
   return html;
 }
@@ -1120,6 +1128,16 @@ function execDelete() {
 }
 
 // ─── 検索 ───
+let _privacyMode = false;
+function togglePrivacy() {
+  _privacyMode = !_privacyMode;
+  document.getElementById('cardList').classList.toggle('privacy-mode', _privacyMode);
+  const btn = document.getElementById('privacyBtn');
+  btn.querySelector('.mi').textContent = _privacyMode ? 'lock' : 'lock_open';
+  btn.style.background = _privacyMode ? 'var(--primary)' : '';
+  btn.style.color = _privacyMode ? 'white' : '';
+}
+
 function toggleSearch() {
   const wrap = document.getElementById('searchBarWrap');
   const isOpen = wrap.style.display !== 'none';
