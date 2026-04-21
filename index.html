@@ -1453,6 +1453,7 @@ function closeStatsListModal() {
 }
 // ─── 書籍検索（Google Books API）───
 let _selectedCoverUrl = '';
+let _selectedVenue = '';
 let _bookSearchTimer = null;
 
 function updateBookSearch() {
@@ -1621,164 +1622,10 @@ document.addEventListener('click', e => {
 
 
 
-// ─── 並び替え ───
-let _sortKey = 'date'; // registered / date / star / title
-let _sortDir = { registered:'desc', date:'desc', star:'desc', title:'asc' };
 
-const SORT_OPTS = [
-  { key:'registered', label:'登録日', icons:['arrow_downward','arrow_upward'] },
-  { key:'date',       label:'読了・視聴日', icons:['arrow_downward','arrow_upward'] },
-  { key:'star',       label:'評価', icons:['arrow_downward','arrow_upward'] },
-  { key:'title',      label:'タイトル', icons:['sort_by_alpha','sort_by_alpha'] },
-];
-const DIR_LABEL = {
-  registered: { desc:'新しい順', asc:'古い順' },
-  date:       { desc:'新しい順', asc:'古い順' },
-  star:       { desc:'高い順',   asc:'低い順' },
-  title:      { asc:'昇順',      desc:'降順' },
-};
 
-function openSortSheet() {
-  const opts = document.getElementById('sortOptions');
-  opts.innerHTML = SORT_OPTS.map(o => {
-    const dir = _sortDir[o.key];
-    const isActive = _sortKey === o.key;
-    const dirLabel = DIR_LABEL[o.key][dir];
-    return `<div onclick="setSort('${o.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:${isActive?'var(--primary-pale)':''}">
-      <span style="font-size:15px;font-weight:${isActive?'700':'400'};color:${isActive?'var(--primary)':'var(--text)'}">${o.label}</span>
-      ${isActive ? `<span style="font-size:13px;color:var(--primary);font-weight:600">${dirLabel}</span>` : ''}
-    </div>`;
-  }).join('');
-  const sheet = document.getElementById('sortSheet');
-  sheet.style.display = 'flex';
-}
-function closeSortSheet() {
-  document.getElementById('sortSheet').style.display = 'none';
-}
-function setSort(key) {
-  if(_sortKey === key) {
-    _sortDir[key] = _sortDir[key] === 'asc' ? 'desc' : 'asc';
-  } else {
-    _sortKey = key;
-  }
-  closeSortSheet();
-  render();
-}
-function getSorted(arr) {
-  const dir = _sortDir[_sortKey];
-  return [...arr].sort((a, b) => {
-    if(_sortKey === 'registered') {
-      const av = a.createdAt||0, bv = b.createdAt||0;
-      return dir==='desc' ? bv-av : av-bv;
-    }
-    if(_sortKey === 'date') {
-      const toNum = d => d?.y ? Number(d.y)*10000+(Number(d.m||0))*100+Number(d.d||0) : 0;
-      const av=toNum(a.date), bv=toNum(b.date);
-      return dir==='desc' ? bv-av : av-bv;
-    }
-    if(_sortKey === 'star') {
-      const av=a.star||0, bv=b.star||0;
-      return dir==='desc' ? bv-av : av-bv;
-    }
-    if(_sortKey === 'title') {
-      return dir==='asc' ? a.title.localeCompare(b.title,'ja') : b.title.localeCompare(a.title,'ja');
-    }
-    return 0;
-  });
-}
 
-// ─── タグ補完 ───
-let _tagList = []; // 現在のタグ配列
-
-function getAllUsedTags() {
-  const set = new Set();
-  items.forEach(it => (it.tags||[]).forEach(t => set.add(t)));
-  return [...set].sort();
-}
-
-function renderTagChips() {
-  const wrap = document.getElementById('tagChips');
-  if(!wrap) return;
-  wrap.innerHTML = _tagList.map((t,i) =>
-    `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--tag-bg);color:var(--tag-text);border-radius:8px;padding:3px 8px;font-size:12px;font-weight:600">
-      ${esc(t)}
-      <span onclick="removeTag(${i})" style="cursor:pointer;font-size:14px;line-height:1;color:var(--tag-text);opacity:0.6;margin-left:2px">×</span>
-    </span>`
-  ).join('');
-  // hidden inputに同期
-  document.getElementById('fTags').value = _tagList.join(' ');
-  // チップがあればプレースホルダーを非表示
-  const inp = document.getElementById('fTagInput');
-  if(inp) inp.placeholder = _tagList.length ? '' : '例: 青春 ほっこり 泣ける';
-}
-
-function removeTag(i) {
-  _tagList.splice(i, 1);
-  renderTagChips();
-  document.getElementById('fTagInput').focus();
-}
-
-function addTag(tag) {
-  tag = tag.trim();
-  if(!tag || _tagList.includes(tag)) return;
-  _tagList.push(tag);
-  renderTagChips();
-  document.getElementById('fTagInput').value = '';
-  document.getElementById('tagCandidates').style.display = 'none';
-  _tagList = [];
-  if(document.getElementById('fTagInput')) document.getElementById('fTagInput').value = '';
-}
-
-function onTagInput() {
-  const input = document.getElementById('fTagInput');
-  const cand  = document.getElementById('tagCandidates');
-  if(!input) return;
-  // モバイルでスペースをoninputで検知してチップ化
-  if(input.value.endsWith(' ') || input.value.endsWith('　')) {
-    const val = input.value.trim();
-    if(val) addTag(val);
-    return;
-  }
-  const current = input.value;
-  if(!current.trim()) { cand.style.display = 'none'; return; }
-  const all  = getAllUsedTags();
-  const hits = all.filter(t =>
-    t.toLowerCase().startsWith(current.toLowerCase()) &&
-    t !== current &&
-    !_tagList.includes(t)
-  );
-  if(!hits.length) { cand.style.display = 'none'; return; }
-  cand.innerHTML = hits.map(t =>
-    `<div style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text);
-      border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px"
-      onmousedown="selectTag('${esc(t)}')" ontouchstart="selectTag('${esc(t)}')">
-      <span class="mi mi-sm" style="color:var(--primary);font-size:14px">label</span>${esc(t)}
-    </div>`
-  ).join('');
-  cand.style.display = 'block';
-}
-
-function selectTag(tag) {
-  addTag(tag);
-  document.getElementById('fTagInput').focus();
-}
-
-function onTagKeydown(e) {
-  const input = document.getElementById('fTagInput');
-  const cand  = document.getElementById('tagCandidates');
-  if(e.key === ' ' || e.key === 'Enter') {
-    const val = input.value.trim();
-    if(val) { e.preventDefault(); addTag(val); }
-    return;
-  }
-  if(e.key === 'Backspace' && !input.value && _tagList.length) {
-    _tagList.pop(); renderTagChips(); return;
-  }
-  if(e.key === 'Escape') { cand.style.display = 'none'; }
-}
-
-// ─── TMDb検索（映像作品・APIキーなし） ───
-let _selectedVenue = '';
+// ─── TMDb検索（映像作品） ───
 
 function setVenue(v) {
   _selectedVenue = v;
@@ -1805,7 +1652,6 @@ async function searchVideos(q) {
     const results = [
       ...(movData.results||[]).map(r=>({
         title: r.title || r.original_title || '',
-        director: '',
         year: r.release_date ? r.release_date.slice(0,4) : '',
         kind: 'movie',
         thumb: r.poster_path ? `https://image.tmdb.org/t/p/w200${r.poster_path}` : '',
@@ -1813,14 +1659,12 @@ async function searchVideos(q) {
       })),
       ...(tvData.results||[]).map(r=>({
         title: r.name || r.original_name || '',
-        director: '',
         year: r.first_air_date ? r.first_air_date.slice(0,4) : '',
         kind: 'tv',
         thumb: r.poster_path ? `https://image.tmdb.org/t/p/w200${r.poster_path}` : '',
         tmdbId: r.id
       }))
     ].filter(r=>r.title).slice(0,8);
-
     let apiHTML = '';
     if(!results.length) {
       apiHTML = '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>';
@@ -1863,7 +1707,6 @@ async function selectVideo(i) {
     document.getElementById('coverPreviewWrap').style.display = 'none';
   }
   candEl.style.display = 'none';
-  // 監督・制作者を非同期で取得
   if(r.tmdbId) {
     const tmdbKey = localStorage.getItem('tmdb-api-key') || '';
     if(tmdbKey) {
@@ -1883,6 +1726,7 @@ async function selectVideo(i) {
     }
   }
 }
+
 // ─── 初期化 ───
 function updateHeaderHeight() {
   const h = document.querySelector('.header')?.offsetHeight || 0;
@@ -1891,7 +1735,6 @@ function updateHeaderHeight() {
 
 async function init() {
   loadItems();
-  // IDBからも読み込み（localStorageが空なら復元）
   if(!items.length) {
     const idbData = await loadFromIDB();
     if(idbData && idbData.length) {
@@ -1899,7 +1742,6 @@ async function init() {
       localStorage.setItem(STORE_KEY, JSON.stringify(items));
     }
   }
-  // それでも空ならGistから自動復元を試みる（サイレント）
   if(!items.length && getGistToken()) {
     const gistData = await loadFromGist();
     if(gistData && gistData.length) {
@@ -1910,7 +1752,176 @@ async function init() {
   }
   render();
   updateHeaderHeight();
-  window.addEventListener("resize", updateHeaderHeight);
+  window.addEventListener('resize', updateHeaderHeight);
+}
+// ─── タグチップ ───
+let _tagList = [];
+
+function getAllUsedTags() {
+  const set = new Set();
+  items.forEach(it => (it.tags||[]).forEach(t => set.add(t)));
+  return [...set].sort();
+}
+
+function renderTagChips() {
+  const wrap = document.getElementById('tagChips');
+  if(!wrap) return;
+  wrap.innerHTML = _tagList.map((t,i) =>
+    `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--tag-bg);color:var(--tag-text);border-radius:8px;padding:3px 8px;font-size:12px;font-weight:600">${esc(t)}<span onclick="removeTag(${i})" style="cursor:pointer;font-size:14px;line-height:1;opacity:0.6;margin-left:2px">×</span></span>`
+  ).join('');
+  document.getElementById('fTags').value = _tagList.join(' ');
+  const inp = document.getElementById('fTagInput');
+  if(inp) inp.placeholder = _tagList.length ? '' : '例: 青春 ほっこり 泣ける';
+}
+
+function removeTag(i) {
+  _tagList.splice(i, 1);
+  renderTagChips();
+  const inp = document.getElementById('fTagInput');
+  if(inp) inp.focus();
+}
+
+function addTag(tag) {
+  tag = tag.trim();
+  const inp = document.getElementById('fTagInput');
+  if(!tag || _tagList.includes(tag)) {
+    if(inp) inp.value = '';
+    return;
+  }
+  _tagList.push(tag);
+  if(inp) inp.value = '';
+  const cand = document.getElementById('tagCandidates');
+  if(cand) cand.style.display = 'none';
+  renderTagChips();
+}
+
+function onTagInput() {
+  const input = document.getElementById('fTagInput');
+  const cand  = document.getElementById('tagCandidates');
+  if(!input) return;
+  const val = input.value;
+  if(val.endsWith(' ') || val.endsWith('　')) {
+    addTag(val); return;
+  }
+  if(!val.trim()) { if(cand) cand.style.display = 'none'; return; }
+  const hits = getAllUsedTags().filter(t =>
+    t.toLowerCase().startsWith(val.toLowerCase()) && t !== val && !_tagList.includes(t)
+  );
+  if(!hits.length || !cand) { if(cand) cand.style.display = 'none'; return; }
+  cand.innerHTML = hits.map(t =>
+    `<div style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px"
+      onmousedown="event.preventDefault();addTag('${esc(t)}');document.getElementById('fTagInput').focus()">
+      <span class="mi mi-sm" style="color:var(--primary);font-size:14px">label</span>${esc(t)}
+    </div>`
+  ).join('');
+  cand.style.display = 'block';
+}
+
+function onTagKeydown(e) {
+  const input = document.getElementById('fTagInput');
+  if(e.key === 'Enter' || e.key === ' ') {
+    const val = input ? input.value.trim() : '';
+    if(val) { e.preventDefault(); addTag(val); }
+    return;
+  }
+  if(e.key === 'Backspace' && input && !input.value && _tagList.length) {
+    _tagList.pop(); renderTagChips(); return;
+  }
+  if(e.key === 'Escape') {
+    const cand = document.getElementById('tagCandidates');
+    if(cand) cand.style.display = 'none';
+  }
+}
+
+// ─── 並び替え ───
+let _sortKey = 'date';
+let _sortDir = { registered:'desc', date:'desc', star:'desc', title:'asc' };
+
+const SORT_OPTS = [
+  { key:'registered', label:'登録日' },
+  { key:'date',       label:'読了・視聴日' },
+  { key:'star',       label:'評価' },
+  { key:'title',      label:'タイトル' },
+];
+const DIR_LABEL = {
+  registered: { desc:'新しい順', asc:'古い順' },
+  date:       { desc:'新しい順', asc:'古い順' },
+  star:       { desc:'高い順',   asc:'低い順' },
+  title:      { asc:'昇順',      desc:'降順' },
+};
+
+function openSortSheet() {
+  const opts = document.getElementById('sortOptions');
+  opts.innerHTML = SORT_OPTS.map(o => {
+    const dir = _sortDir[o.key];
+    const isActive = _sortKey === o.key;
+    return `<div onclick="setSort('${o.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:${isActive?'var(--primary-pale)':''}">
+      <span style="font-size:15px;font-weight:${isActive?'700':'400'};color:${isActive?'var(--primary)':'var(--text)'}">${o.label}</span>
+      ${isActive ? `<span style="font-size:13px;color:var(--primary);font-weight:600">${DIR_LABEL[o.key][dir]}</span>` : ''}
+    </div>`;
+  }).join('');
+  const sheet = document.getElementById('sortSheet');
+  sheet.style.display = 'flex';
+}
+function closeSortSheet() {
+  document.getElementById('sortSheet').style.display = 'none';
+}
+function setSort(key) {
+  if(_sortKey === key) {
+    _sortDir[key] = _sortDir[key] === 'asc' ? 'desc' : 'asc';
+  } else {
+    _sortKey = key;
+  }
+  closeSortSheet();
+  render();
+}
+function getSorted(arr) {
+  const dir = _sortDir[_sortKey];
+  return [...arr].sort((a, b) => {
+    if(_sortKey === 'registered') {
+      const av = a.createdAt||0, bv = b.createdAt||0;
+      return dir==='desc' ? bv-av : av-bv;
+    }
+    if(_sortKey === 'date') {
+      const toNum = d => d?.y ? Number(d.y)*10000+(Number(d.m||0))*100+Number(d.d||0) : 0;
+      return dir==='desc' ? toNum(b.date)-toNum(a.date) : toNum(a.date)-toNum(b.date);
+    }
+    if(_sortKey === 'star') {
+      return dir==='desc' ? (b.star||0)-(a.star||0) : (a.star||0)-(b.star||0);
+    }
+    if(_sortKey === 'title') {
+      return dir==='asc' ? a.title.localeCompare(b.title,'ja') : b.title.localeCompare(a.title,'ja');
+    }
+    return 0;
+  });
+}
+
+// ─── 初期化 ───
+function updateHeaderHeight() {
+  const h = document.querySelector('.header')?.offsetHeight || 0;
+  document.documentElement.style.setProperty('--header-h', h + 'px');
+}
+
+async function init() {
+  loadItems();
+  if(!items.length) {
+    const idbData = await loadFromIDB();
+    if(idbData && idbData.length) {
+      items = idbData;
+      localStorage.setItem(STORE_KEY, JSON.stringify(items));
+    }
+  }
+  if(!items.length && getGistToken()) {
+    const gistData = await loadFromGist();
+    if(gistData && gistData.length) {
+      items = gistData;
+      localStorage.setItem(STORE_KEY, JSON.stringify(items));
+      await saveToIDB(items);
+    }
+  }
+  render();
+  updateHeaderHeight();
+  window.addEventListener('resize', updateHeaderHeight);
 }
 init();
 
