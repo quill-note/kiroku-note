@@ -437,6 +437,10 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
       <label class="form-label" id="authorLabel">作者 / 監督など</label>
       <input class="form-input" id="fAuthor" placeholder="省略可">
     </div>
+    <div class="form-group" id="publisherGroup">
+      <label class="form-label">出版社</label>
+      <input class="form-input" id="fPublisher" placeholder="省略可">
+    </div>
     <div class="form-group">
       <label class="form-label">評価</label>
       <div class="star-select" id="starSelect" style="display:flex;gap:4px">
@@ -855,6 +859,7 @@ function cardHTML(it) {
   const tags = (it.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('');
   const memo = it.memo ? `<div class="card-memo">${esc(it.memo)}</div>` : '';
   const author = it.author ? `<div class="card-author"><span class="mi mi-sm">person</span> ${esc(it.author)}</div>` : '';
+  const publisher = it.publisher ? `<div class="card-author" style="margin-top:-4px"><span class="mi mi-sm">business</span> ${esc(it.publisher)}</div>` : '';
   const starRow = it.star > 0 ? `<div class="stars">${starsHTML(it.star)}</div>` : '';
   const dateStr = formatDate(it.date);
   const dateEl = dateStr ? `<span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:2px"><span class="mi mi-sm">event</span>${esc(dateStr)}</span>` : '';
@@ -896,14 +901,14 @@ function cardHTML(it) {
         <img class="card-cover" src="${esc(it.coverUrl)}" alt="表紙" onerror="this.style.display='none'">
         <div class="card-cover-info">
           <div class="card-header" style="margin-bottom:4px"><div class="card-title">${esc(it.title)}</div>${actions}</div>
-          ${author}${metaRow1}${metaRow2}${metaRow3}${tagsRow}
+          ${author}${publisher}${metaRow1}${metaRow2}${metaRow3}${tagsRow}
         </div>
       </div>${memo}
     </div>`;
   }
   return `<div class="card" onclick="openEdit('${it.id}')">
     <div class="card-header"><div class="card-title">${esc(it.title)}</div>${actions}</div>
-    ${author}${metaRow1}${metaRow2}${metaRow3}${tagsRow}${memo}
+    ${author}${publisher}${metaRow1}${metaRow2}${metaRow3}${tagsRow}${memo}
   </div>`;
 }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -991,6 +996,7 @@ function openAddModal() {
   document.getElementById('modalTitleText').textContent = '作品を追加';
   document.getElementById('fTitle').value = '';
   document.getElementById('fAuthor').value = '';
+  document.getElementById('fPublisher').value = '';
   document.getElementById('fType').value = 'book'; updateBookSearch();
   document.getElementById('fStatus').value = 'want';
   _tagList = [];
@@ -1024,6 +1030,7 @@ function openEdit(id) {
   document.getElementById('modalTitleText').textContent = '作品を編集';
   document.getElementById('fTitle').value = it.title||'';
   document.getElementById('fAuthor').value = it.author||'';
+  document.getElementById('fPublisher').value = it.publisher||'';
   document.getElementById('fType').value = it.type||'book'; updateBookSearch();
   document.getElementById('fStatus').value = it.status||'want';
   _tagList = [...(it.tags||[])];
@@ -1105,6 +1112,7 @@ function saveItem() {
     if(it) {
       it.title = title;
       it.author = document.getElementById('fAuthor').value.trim();
+      it.publisher = document.getElementById('fPublisher').value.trim();
       it.type = document.getElementById('fType').value;
       it.status = document.getElementById('fStatus').value;
       it.star = _starTemp;
@@ -1122,6 +1130,7 @@ function saveItem() {
       id: genId(),
       title,
       author: document.getElementById('fAuthor').value.trim(),
+      publisher: document.getElementById('fPublisher').value.trim(),
       type: document.getElementById('fType').value,
       status: document.getElementById('fStatus').value,
       star: _starTemp,
@@ -1467,6 +1476,7 @@ function updateBookSearch() {
   document.getElementById('bookCandidates').style.display = 'none';
   // 視聴場所・公開年は映像作品のみ
   document.getElementById('venueGroup').style.display = isVideo ? 'block' : 'none';
+  document.getElementById('publisherGroup').style.display = isVideo ? 'none' : 'block';
   document.getElementById('releaseYearGroup').style.display = isVideo ? 'block' : 'none';
   // 表紙プレビューは本・映像作品のみ（otherは非表示）
   if(!isBook && !isVideo) {
@@ -1610,6 +1620,7 @@ function selectBook(i) {
   document.getElementById('fTitle').value = info.title || '';
   const authors = (info.authors || []).join(', ');
   if(authors) document.getElementById('fAuthor').value = authors;
+  if(info.publisher) document.getElementById('fPublisher').value = info.publisher;
   const thumb = (info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '').replace('http:','https:');
   _selectedCoverUrl = thumb;
   if(thumb) {
