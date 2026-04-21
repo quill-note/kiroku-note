@@ -425,7 +425,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
       <label class="form-label">タイトル *</label>
       <div style="display:flex;gap:6px;align-items:flex-start">
         <div style="flex:1;position:relative">
-          <input class="form-input" id="fTitle" placeholder="タイトルを入力" oninput="onTitleInput()" oncompositionstart="_isComposing=true" oncompositionend="_isComposing=false;setTimeout(onTitleInput,30)" autocomplete="off">
+          <input class="form-input" id="fTitle" placeholder="タイトルを入力" oninput="onTitleInput()" oncompositionstart="_isComposing=true" oncompositionend="_isComposing=false;onTitleInput()" autocomplete="off">
           <div class="book-candidates" id="bookCandidates" style="display:none"></div>
         </div>
         <div id="coverPreviewWrap" style="display:none">
@@ -1508,9 +1508,9 @@ function onTitleInput() {
   candEl.innerHTML = buildCandidateHTML(q, null);
   if(q.length < 2) return;
   if(type === 'book') {
-    _bookSearchTimer = setTimeout(() => searchBooks(q), 350);
+    _bookSearchTimer = setTimeout(() => searchBooks(q), 600);
   } else if(type === 'video') {
-    _bookSearchTimer = setTimeout(() => searchVideos(q), 350);
+    _bookSearchTimer = setTimeout(() => searchVideos(q), 600);
   }
 }
 
@@ -1564,37 +1564,26 @@ function selectAsIs() {
 }
 
 async function searchBooks(q) {
-  // レース条件対策: 検索開始時点の入力値と一致しなければ中止
-  const currentInput = document.getElementById('fTitle')?.value.trim() || '';
-  if(currentInput !== q) return;
-
   const candEl = document.getElementById('bookCandidates');
   candEl.style.display = 'block';
   candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>');
   try {
     const gbKey = localStorage.getItem('gbooks-api-key') || '';
-    // intitle: で精度を上げる
-    const url = `https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(q)}&maxResults=20${gbKey ? '&key='+gbKey : ''}`;
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20${gbKey ? '&key='+gbKey : ''}`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
     const data = await res.json();
-
-    // レース条件対策: レスポンス受信時にも確認
-    const latestInput = document.getElementById('fTitle')?.value.trim() || '';
-    if(latestInput !== q) return;
-
+    // APIの結果をそのまま使用（単話・分冊を後ろに）
     const rawItems = data.items || [];
-    // 重複タイトルのみ除去（フィルタリングはAPIに任せる）
-    const seen = new Set();
-    const bookItems = rawItems.filter(item => {
-      const t = item.volumeInfo?.title || '';
-      if(seen.has(t)) return false;
-      seen.add(t);
-      return true;
+    const bookItems = rawItems.sort((a, b) => {
+      const ta = (a.volumeInfo?.title || '').toLowerCase();
+      const tb = (b.volumeInfo?.title || '').toLowerCase();
+      const sa = ta.includes('単話') || ta.includes('分冊') ? -1 : 0;
+      const sb = tb.includes('単話') || tb.includes('分冊') ? -1 : 0;
+      return sb - sa;
     }).slice(0, 8);
-
     let apiHTML = '';
     if(!bookItems.length) {
       apiHTML = '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>';
@@ -1619,9 +1608,6 @@ async function searchBooks(q) {
     candEl._books = bookItems;
     candEl.innerHTML = buildCandidateHTML(q, apiHTML);
   } catch(e) {
-    // レース条件対策: エラー時にも確認
-    const latestInput = document.getElementById('fTitle')?.value.trim() || '';
-    if(latestInput !== q) return;
     candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました</div>');
   }
 }
