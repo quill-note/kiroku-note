@@ -1723,10 +1723,10 @@ async function selectVideo(i) {
     if(tmdbKey) {
       try {
         if(r.kind === 'movie') {
-          const res = await fetch(`https://api.themoviedb.org/3/movie/${r.tmdbId}/credits?api_key=${tmdbKey}`);
+          const res = await fetch(`https://api.themoviedb.org/3/movie/${r.tmdbId}/credits?api_key=${tmdbKey}&language=ja`);
           const data = await res.json();
           const directorJobs = ['Director','Series Director','Co-Director','Animation Director','Supervising Director'];
-          const director = (data.crew||[]).find(p => directorJobs.includes(p.job) || p.department === 'Directing');
+          const director = (data.crew||[]).find(p => directorJobs.includes(p.job));
           if(director) document.getElementById('fAuthor').value = director.name;
         } else {
           const res = await fetch(`https://api.themoviedb.org/3/tv/${r.tmdbId}?api_key=${tmdbKey}&language=ja`);
