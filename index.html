@@ -1567,13 +1567,14 @@ async function searchBooks(q) {
   candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>');
   try {
     const gbKey = localStorage.getItem('gbooks-api-key') || '';
-  const tmdbKey = localStorage.getItem('tmdb-api-key') || '';
     const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20&orderBy=relevance${gbKey ? '&key='+gbKey : ''}`;
     const res = await fetch(url);
     const data = await res.json();
+    // 結果が返ってきたとき、現在の入力値と一致するか確認（ずれていたら無視）
+    const currentQ = document.getElementById('fTitle')?.value.trim() || '';
+    if(currentQ !== q) return;
     const q_lower = q.toLowerCase();
     const rawItems = data.items || [];
-    // タイトルに検索語が含まれるものを優先、なければそのまま表示
     const matched = rawItems.filter(item => {
       const t = (item.volumeInfo?.title || '').toLowerCase();
       return t.includes(q_lower);
@@ -1610,7 +1611,10 @@ async function searchBooks(q) {
     candEl._books = bookItems;
     candEl.innerHTML = buildCandidateHTML(q, apiHTML);
   } catch(e) {
-    candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました</div>');
+    const currentQ2 = document.getElementById('fTitle')?.value.trim() || '';
+    if(currentQ2 === q) {
+      candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました</div>');
+    }
   }
 }
 
