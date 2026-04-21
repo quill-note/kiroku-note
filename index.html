@@ -635,6 +635,7 @@ function renderBackupUI() {
     ? `<span style="color:var(--warn);font-weight:600"><span class="mi mi-sm">cloud_upload</span> トークン設定済（初回保存で接続）</span>`
     : `<span style="color:var(--text3)"><span class="mi mi-sm">cloud_off</span> 未設定</span>`;
   const gbKey = localStorage.getItem('gbooks-api-key') || '';
+  const tmdbKey = localStorage.getItem('tmdb-api-key') || '';
   document.getElementById('backupSection').innerHTML = `
     <div style="font-size:12px;margin-bottom:8px">状態: ${statusHtml}</div>
     ${!token ? `
@@ -651,13 +652,20 @@ function renderBackupUI() {
       <button onclick="clearGistToken()" class="btn-secondary" style="width:100%;padding:10px;font-size:12px">トークンをリセット</button>
     `}
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px"><span class="mi mi-sm">menu_book</span> 書影検索 APIキー（任意）</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.6">Google Books APIキーを設定すると書影・書誌情報を自動取得できます。<br>取得方法: <a href="https://console.cloud.google.com/" target="_blank" style="color:var(--primary)">Google Cloud Console</a> → Books API → 認証情報</div>
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px"><span class="mi mi-sm">menu_book</span> 書影検索 APIキー（Google Books）</div>
       <div style="display:flex;gap:6px">
         <input type="password" id="gbooksKeyInput" class="form-input" placeholder="AIzaSy..." value="${gbKey}" style="flex:1;font-size:12px">
         <button onclick="saveGbooksKey()" class="btn-primary" style="padding:10px 12px;white-space:nowrap;font-size:12px">保存</button>
       </div>
       ${gbKey ? `<div style="font-size:11px;color:var(--success);margin-top:4px"><span class="mi mi-sm">check_circle</span> 設定済み</div>` : ''}
+    </div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px"><span class="mi mi-sm">movie</span> 映像検索 APIキー（TMDb）</div>
+      <div style="display:flex;gap:6px">
+        <input type="password" id="tmdbKeyInput" class="form-input" placeholder="1b09..." value="${tmdbKey}" style="flex:1;font-size:12px">
+        <button onclick="saveTmdbKey()" class="btn-primary" style="padding:10px 12px;white-space:nowrap;font-size:12px">保存</button>
+      </div>
+      ${tmdbKey ? `<div style="font-size:11px;color:var(--success);margin-top:4px"><span class="mi mi-sm">check_circle</span> 設定済み</div>` : ''}
     </div>
   `;
 }
@@ -682,6 +690,17 @@ async function restoreFromGist() {
   await saveToIDB(items);
   render();
   showToast('クラウドから復元しました','check_circle');
+}
+function saveTmdbKey() {
+  const key = document.getElementById('tmdbKeyInput').value.trim();
+  if(key) {
+    localStorage.setItem('tmdb-api-key', key);
+    showToast('TMDb APIキーを保存しました', 'check_circle');
+  } else {
+    localStorage.removeItem('tmdb-api-key');
+    showToast('TMDb APIキーを削除しました', 'delete');
+  }
+  renderBackupUI();
 }
 function saveGbooksKey() {
   const key = document.getElementById('gbooksKeyInput').value.trim();
@@ -1411,6 +1430,7 @@ async function searchBooks(q) {
   candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>');
   try {
     const gbKey = localStorage.getItem('gbooks-api-key') || '';
+  const tmdbKey = localStorage.getItem('tmdb-api-key') || '';
     const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8${gbKey ? '&key='+gbKey : ''}`;
     const res = await fetch(url);
     const data = await res.json();
@@ -1536,56 +1556,53 @@ async function searchVideos(q) {
   const candEl = document.getElementById('bookCandidates');
   candEl.style.display = 'block';
   candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>');
+  const tmdbKey = localStorage.getItem('tmdb-api-key') || '';
+  if(!tmdbKey) {
+    candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">⚙️ バックアップ設定からTMDb APIキーを設定してください</div>');
+    return;
+  }
   try {
-    // TMDb multi-search（APIキー不要の公開エンドポイントは使えないため、movie+tvを並列）
-    const [movRes, tvRes] = await Promise.all([
-      fetch(`https://api.themoviedb.org/3/search/multi?api_key=4f4f4a2c9b9c4b2a1c9c9b9a4b2a1c9c&query=${encodeURIComponent(q)}&language=ja&page=1`).catch(()=>null),
-      Promise.resolve(null)
-    ]);
-    // TMDbはAPIキー必須のため、代替としてOMDb（無料・キー不要でタイトル検索）を使用
-    // OMDbもキー必要なため、ここではiTunes Search APIを使用（完全無料・キー不要）
-    const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&country=jp&media=movie&limit=5&lang=ja_jp`;
-    const tvUrl     = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&country=jp&media=tvSeason&limit=5&lang=ja_jp`;
     const [movData, tvData] = await Promise.all([
-      fetch(itunesUrl).then(r=>r.json()).catch(()=>({results:[]})),
-      fetch(tvUrl).then(r=>r.json()).catch(()=>({results:[]}))
+      fetch(`https://api.themoviedb.org/3/search/movie?api_key=${tmdbKey}&query=${encodeURIComponent(q)}&language=ja&region=JP`).then(r=>r.json()).catch(()=>({results:[]})),
+      fetch(`https://api.themoviedb.org/3/search/tv?api_key=${tmdbKey}&query=${encodeURIComponent(q)}&language=ja`).then(r=>r.json()).catch(()=>({results:[]}))
     ]);
     const results = [
       ...(movData.results||[]).map(r=>({
-        title: r.trackName || r.collectionName || '',
-        director: r.artistName || '',
-        year: r.releaseDate ? r.releaseDate.slice(0,4) : '',
-        kind: r.kind || 'feature-movie',
-        thumb: (r.artworkUrl100||'').replace('100x100','200x200')
+        title: r.title || r.original_title || '',
+        director: '',
+        year: r.release_date ? r.release_date.slice(0,4) : '',
+        kind: 'movie',
+        thumb: r.poster_path ? `https://image.tmdb.org/t/p/w200${r.poster_path}` : ''
       })),
       ...(tvData.results||[]).map(r=>({
-        title: r.collectionName || r.trackName || '',
-        director: r.artistName || '',
-        year: r.releaseDate ? r.releaseDate.slice(0,4) : '',
-        kind: 'tv-season',
-        thumb: (r.artworkUrl100||'').replace('100x100','200x200')
+        title: r.name || r.original_name || '',
+        director: '',
+        year: r.first_air_date ? r.first_air_date.slice(0,4) : '',
+        kind: 'tv',
+        thumb: r.poster_path ? `https://image.tmdb.org/t/p/w200${r.poster_path}` : ''
       }))
     ].filter(r=>r.title).slice(0,8);
 
+    let apiHTML = '';
     if(!results.length) {
-      candEl.innerHTML = buildCandidateHTML(q, '');
-      return;
+      apiHTML = '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>';
+    } else {
+      apiHTML = results.map((r,i) => {
+        const kindLabel = r.kind==='tv' ? 'ドラマ・TV' : '映画';
+        const kindIcon  = r.kind==='tv' ? 'tv' : 'movie';
+        const thumbHTML = r.thumb
+          ? `<img class="book-cand-thumb" src="${r.thumb}" alt="" onerror="this.style.display='none'">`
+          : `<div class="book-cand-thumb-empty"><span class="mi mi-sm">${kindIcon}</span></div>`;
+        return `<div class="book-candidate" onclick="selectVideo(${i})">
+          ${thumbHTML}
+          <div class="book-cand-info">
+            <div class="book-cand-title">${esc(r.title)}</div>
+            <div class="book-cand-author"><span class="mi mi-sm" style="font-size:12px">${kindIcon}</span> ${esc(kindLabel)}${r.year?' · '+r.year:''}</div>
+          </div>
+        </div>`;
+      }).join('');
     }
     candEl._videos = results;
-    const apiHTML = results.map((r,i) => {
-      const kindLabel = r.kind==='tv-season' ? 'ドラマ・TV' : '映画・アニメ';
-      const kindIcon  = r.kind==='tv-season' ? 'tv' : 'movie';
-      const thumbHTML = r.thumb
-        ? `<img class="book-cand-thumb" src="${r.thumb}" alt="" onerror="this.style.display='none'">`
-        : `<div class="book-cand-thumb-empty"><span class="mi mi-sm">${kindIcon}</span></div>`;
-      return `<div class="book-candidate" onclick="selectVideo(${i})">
-        ${thumbHTML}
-        <div class="book-cand-info">
-          <div class="book-cand-title">${esc(r.title)}</div>
-          <div class="book-cand-author"><span class="mi mi-sm" style="font-size:12px">${kindIcon}</span> ${esc(kindLabel)}${r.director?' · '+esc(r.director):''}${r.year?' · '+r.year:''}</div>
-        </div>
-      </div>`;
-    }).join('');
     candEl.innerHTML = buildCandidateHTML(q, apiHTML);
   } catch(e) {
     candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました</div>');
@@ -1600,7 +1617,6 @@ function selectVideo(i) {
   document.getElementById('fTitle').value = r.title;
   if(r.director) document.getElementById('fAuthor').value = r.director;
   if(r.year) document.getElementById('fReleaseYear').value = r.year + '年';
-  // カバー画像を保存
   const thumb = r.thumb || '';
   _selectedCoverUrl = thumb;
   if(thumb) {
