@@ -425,7 +425,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
       <label class="form-label">タイトル *</label>
       <div style="display:flex;gap:6px;align-items:flex-start">
         <div style="flex:1;position:relative">
-          <input class="form-input" id="fTitle" placeholder="タイトルを入力" oninput="onTitleInput()" autocomplete="off">
+          <input class="form-input" id="fTitle" placeholder="タイトルを入力" oninput="onTitleInput()" oncompositionstart="_isComposing=true" oncompositionend="_isComposing=false;onTitleInput()" autocomplete="off">
           <div class="book-candidates" id="bookCandidates" style="display:none"></div>
         </div>
         <div id="coverPreviewWrap" style="display:none">
@@ -1457,6 +1457,7 @@ function closeStatsListModal() {
 let _selectedCoverUrl = '';
 let _selectedVenue = '';
 let _bookSearchTimer = null;
+let _isComposing = false;
 
 function updateBookSearch() {
   const type = document.getElementById('fType').value;
@@ -1480,15 +1481,19 @@ function updateBookSearch() {
 function onTitleInput() {
   const type = document.getElementById('fType').value;
   const q = document.getElementById('fTitle').value.trim();
+  // 「○○で追加」ラベルを常に最新値に更新
+  const lbl = document.getElementById('addAsIsLabel');
+  if(lbl) lbl.textContent = `「${q}」で追加`;
   clearTimeout(_bookSearchTimer);
   const candEl = document.getElementById('bookCandidates');
+  // IME変換中は検索しない
+  if(_isComposing) return;
   candEl._books = null;
   candEl._videos = null;
   if(q.length < 1) {
     candEl.style.display = 'none';
     return;
   }
-  // ローカル履歴を即時表示
   candEl.style.display = 'block';
   candEl.innerHTML = buildCandidateHTML(q, null);
   if(q.length < 2) return;
@@ -1521,10 +1526,10 @@ function buildCandidateHTML(q, apiHTML) {
     html += apiHTML;
   }
   html += `<div style="border-top:1px solid var(--border)"></div>
-  <div class="book-candidate" onclick="selectAsIs()">
+  <div class="book-candidate" id="addAsIsBtn" onclick="selectAsIs()">
     <div class="book-cand-thumb-empty" style="background:var(--primary-pale)"><span class="mi mi-sm" style="color:var(--primary)">add_circle_outline</span></div>
     <div class="book-cand-info">
-      <div class="book-cand-title" style="color:var(--primary)">「${esc(q)}」で追加</div>
+      <div class="book-cand-title" id="addAsIsLabel" style="color:var(--primary)">「${esc(q)}」で追加</div>
       <div class="book-cand-author">候補を使わずこのまま登録</div>
     </div>
   </div>`;
