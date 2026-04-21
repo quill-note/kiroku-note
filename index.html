@@ -1572,14 +1572,16 @@ async function searchVideos(q) {
         director: '',
         year: r.release_date ? r.release_date.slice(0,4) : '',
         kind: 'movie',
-        thumb: r.poster_path ? `https://image.tmdb.org/t/p/w200${r.poster_path}` : ''
+        thumb: r.poster_path ? `https://image.tmdb.org/t/p/w200${r.poster_path}` : '',
+        tmdbId: r.id
       })),
       ...(tvData.results||[]).map(r=>({
         title: r.name || r.original_name || '',
         director: '',
         year: r.first_air_date ? r.first_air_date.slice(0,4) : '',
         kind: 'tv',
-        thumb: r.poster_path ? `https://image.tmdb.org/t/p/w200${r.poster_path}` : ''
+        thumb: r.poster_path ? `https://image.tmdb.org/t/p/w200${r.poster_path}` : '',
+        tmdbId: r.id
       }))
     ].filter(r=>r.title).slice(0,8);
 
@@ -1609,13 +1611,12 @@ async function searchVideos(q) {
   }
 }
 
-function selectVideo(i) {
+async function selectVideo(i) {
   const candEl = document.getElementById('bookCandidates');
   const results = candEl._videos || [];
   const r = results[i];
   if(!r) return;
   document.getElementById('fTitle').value = r.title;
-  if(r.director) document.getElementById('fAuthor').value = r.director;
   if(r.year) document.getElementById('fReleaseYear').value = r.year + '年';
   const thumb = r.thumb || '';
   _selectedCoverUrl = thumb;
@@ -1626,6 +1627,25 @@ function selectVideo(i) {
     document.getElementById('coverPreviewWrap').style.display = 'none';
   }
   candEl.style.display = 'none';
+  // 監督・制作者を非同期で取得
+  if(r.tmdbId) {
+    const tmdbKey = localStorage.getItem('tmdb-api-key') || '';
+    if(tmdbKey) {
+      try {
+        if(r.kind === 'movie') {
+          const res = await fetch(`https://api.themoviedb.org/3/movie/${r.tmdbId}/credits?api_key=${tmdbKey}&language=ja`);
+          const data = await res.json();
+          const director = (data.crew||[]).find(p => p.job === 'Director');
+          if(director) document.getElementById('fAuthor').value = director.name;
+        } else {
+          const res = await fetch(`https://api.themoviedb.org/3/tv/${r.tmdbId}?api_key=${tmdbKey}&language=ja`);
+          const data = await res.json();
+          const creators = (data.created_by||[]).map(p=>p.name).join(', ');
+          if(creators) document.getElementById('fAuthor').value = creators;
+        }
+      } catch(e) {}
+    }
+  }
 }
 // ─── 初期化 ───
 async function init() {
