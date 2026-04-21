@@ -1577,7 +1577,8 @@ async function searchBooks(q) {
     const normalize = s => s.toLowerCase()
       .replace(/[－ー―‐]/g, '-')
       .replace(/[　 ]+/g, ' ')
-      .replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+      .replace(/[！-～]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+      .toLowerCase();
     const q_norm = normalize(q);
     const rawItems = data.items || [];
     const matched = rawItems.filter(item => {
