@@ -446,9 +446,14 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
       </div>
     </div>
     <div class="form-group" style="position:relative">
-      <label class="form-label">タグ（スペース区切り）</label>
-      <input class="form-input" id="fTags" placeholder="例: 青春 ほっこり 泣ける"
-        oninput="onTagInput()" onkeydown="onTagKeydown(event)" autocomplete="off">
+      <label class="form-label">タグ <span style="font-weight:400;color:var(--text3)">（スペースで確定）</span></label>
+      <div id="tagChipWrap" style="min-height:42px;padding:6px 10px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);display:flex;flex-wrap:wrap;gap:6px;align-items:center;cursor:text;transition:border-color 0.2s" onclick="document.getElementById('fTagInput').focus()" onfocusin="this.style.borderColor='var(--primary-light)'" onfocusout="this.style.borderColor='var(--border)'">
+        <div id="tagChips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        <input id="fTagInput" placeholder="例: 青春 ほっこり 泣ける" autocomplete="off"
+          style="border:none;outline:none;background:transparent;font-size:14px;color:var(--text);font-family:inherit;min-width:100px;flex:1"
+          oninput="onTagInput()" onkeyup="onTagInput()" onkeydown="onTagKeydown(event)">
+      </div>
+      <input type="hidden" id="fTags">
       <div id="tagCandidates" style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;
         background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-md);
         box-shadow:0 4px 12px var(--shadow);z-index:60;max-height:180px;overflow-y:auto"></div>
@@ -986,7 +991,9 @@ function openAddModal() {
   document.getElementById('fAuthor').value = '';
   document.getElementById('fType').value = 'book'; updateBookSearch();
   document.getElementById('fStatus').value = 'want';
-  document.getElementById('fTags').value = '';
+  _tagList = [];
+  renderTagChips();
+  if(document.getElementById('fTagInput')) document.getElementById('fTagInput').value = '';
   document.getElementById('fMemo').value = '';
   _selectedCoverUrl = '';
   _selectedVenue = '';
@@ -1017,7 +1024,9 @@ function openEdit(id) {
   document.getElementById('fAuthor').value = it.author||'';
   document.getElementById('fType').value = it.type||'book'; updateBookSearch();
   document.getElementById('fStatus').value = it.status||'want';
-  document.getElementById('fTags').value = (it.tags||[]).join(' ');
+  _tagList = [...(it.tags||[])];
+  renderTagChips();
+  if(document.getElementById('fTagInput')) document.getElementById('fTagInput').value = '';
   document.getElementById('fMemo').value = it.memo||'';
   _selectedCoverUrl = it.coverUrl||'';
   _selectedVenue = it.venue||'';
@@ -1035,6 +1044,8 @@ function openEdit(id) {
 function closeModal() {
   document.getElementById('editModal').classList.remove('active');
   document.getElementById('tagCandidates').style.display = 'none';
+  _tagList = [];
+  if(document.getElementById('fTagInput')) document.getElementById('fTagInput').value = '';
 }
 
 
@@ -1086,7 +1097,7 @@ function renderStarSelect(v) {
 function saveItem() {
   const title = document.getElementById('fTitle').value.trim();
   if(!title) { document.getElementById('fTitle').focus(); return; }
-  const tags = document.getElementById('fTags').value.trim().split(/\s+/).filter(Boolean);
+  const tags = [..._tagList];
   if(editingId) {
     const it = items.find(i=>i.id===editingId);
     if(it) {
@@ -1677,21 +1688,65 @@ function getSorted(arr) {
 }
 
 // ─── タグ補完 ───
+let _tagList = []; // 現在のタグ配列
+
 function getAllUsedTags() {
   const set = new Set();
   items.forEach(it => (it.tags||[]).forEach(t => set.add(t)));
   return [...set].sort();
 }
+
+function renderTagChips() {
+  const wrap = document.getElementById('tagChips');
+  if(!wrap) return;
+  wrap.innerHTML = _tagList.map((t,i) =>
+    `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--tag-bg);color:var(--tag-text);border-radius:8px;padding:3px 8px;font-size:12px;font-weight:600">
+      ${esc(t)}
+      <span onclick="removeTag(${i})" style="cursor:pointer;font-size:14px;line-height:1;color:var(--tag-text);opacity:0.6;margin-left:2px">×</span>
+    </span>`
+  ).join('');
+  // hidden inputに同期
+  document.getElementById('fTags').value = _tagList.join(' ');
+  // チップがあればプレースホルダーを非表示
+  const inp = document.getElementById('fTagInput');
+  if(inp) inp.placeholder = _tagList.length ? '' : '例: 青春 ほっこり 泣ける';
+}
+
+function removeTag(i) {
+  _tagList.splice(i, 1);
+  renderTagChips();
+  document.getElementById('fTagInput').focus();
+}
+
+function addTag(tag) {
+  tag = tag.trim();
+  if(!tag || _tagList.includes(tag)) return;
+  _tagList.push(tag);
+  renderTagChips();
+  document.getElementById('fTagInput').value = '';
+  document.getElementById('tagCandidates').style.display = 'none';
+  _tagList = [];
+  if(document.getElementById('fTagInput')) document.getElementById('fTagInput').value = '';
+}
+
 function onTagInput() {
-  const input = document.getElementById('fTags');
+  const input = document.getElementById('fTagInput');
   const cand  = document.getElementById('tagCandidates');
-  const val   = input.value;
-  // 最後のスペース以降が「いま入力中のタグ」
-  const parts  = val.split(' ');
-  const current = parts[parts.length - 1];
-  if(!current) { cand.style.display = 'none'; return; }
+  if(!input) return;
+  // モバイルでスペースをoninputで検知してチップ化
+  if(input.value.endsWith(' ') || input.value.endsWith('　')) {
+    const val = input.value.trim();
+    if(val) addTag(val);
+    return;
+  }
+  const current = input.value;
+  if(!current.trim()) { cand.style.display = 'none'; return; }
   const all  = getAllUsedTags();
-  const hits = all.filter(t => t.toLowerCase().startsWith(current.toLowerCase()) && t !== current);
+  const hits = all.filter(t =>
+    t.toLowerCase().startsWith(current.toLowerCase()) &&
+    t !== current &&
+    !_tagList.includes(t)
+  );
   if(!hits.length) { cand.style.display = 'none'; return; }
   cand.innerHTML = hits.map(t =>
     `<div style="padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text);
@@ -1702,17 +1757,23 @@ function onTagInput() {
   ).join('');
   cand.style.display = 'block';
 }
+
 function selectTag(tag) {
-  const input = document.getElementById('fTags');
-  const parts = input.value.split(' ');
-  parts[parts.length - 1] = tag;
-  input.value = parts.join(' ') + ' ';
-  document.getElementById('tagCandidates').style.display = 'none';
-  input.focus();
+  addTag(tag);
+  document.getElementById('fTagInput').focus();
 }
+
 function onTagKeydown(e) {
-  const cand = document.getElementById('tagCandidates');
-  if(cand.style.display === 'none') return;
+  const input = document.getElementById('fTagInput');
+  const cand  = document.getElementById('tagCandidates');
+  if(e.key === ' ' || e.key === 'Enter') {
+    const val = input.value.trim();
+    if(val) { e.preventDefault(); addTag(val); }
+    return;
+  }
+  if(e.key === 'Backspace' && !input.value && _tagList.length) {
+    _tagList.pop(); renderTagChips(); return;
+  }
   if(e.key === 'Escape') { cand.style.display = 'none'; }
 }
 
