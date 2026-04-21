@@ -57,13 +57,16 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .btn-icon:hover { background: var(--border); }
 
 /* フィルターバー */
-.filter-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.filter-bar { display: flex; gap: 6px; padding-bottom: 2px; }
+.filter-bar-fixed { flex-shrink: 0; }
+.filter-bar-scroll { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; }
+.filter-bar-scroll::-webkit-scrollbar { display: none; }
 .filter-bar::-webkit-scrollbar { display: none; }
 .filter-chip { flex-shrink: 0; padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .filter-chip.active { background: var(--primary); border-color: var(--primary); color: white; }
 
 /* タブ */
-.tabs { display: flex; background: var(--surface); border-bottom: 2px solid var(--border); }
+.tabs { display: flex; background: var(--surface); border-bottom: 2px solid var(--border); position: sticky; top: var(--header-h, 0); z-index: 99; }
 .tab { flex: 1; padding: 8px 4px; text-align: center; font-size: 12px; font-weight: 600; color: var(--text3); border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
 .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
 
@@ -344,10 +347,14 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
     </div>
   </div>
   <div class="filter-bar" id="filterBar">
-    <button class="filter-chip active" onclick="setFilter('all',this)"><span class="mi mi-sm">apps</span> すべて</button>
-    <button class="filter-chip" onclick="setFilter('book',this)"><span class="mi mi-sm">menu_book</span> 本・小説・漫画</button>
-    <button class="filter-chip" onclick="setFilter('video',this)"><span class="mi mi-sm">movie</span> ドラマ・映画</button>
-    <button class="filter-chip" onclick="setFilter('other',this)"><span class="mi mi-sm">category</span> その他</button>
+    <div class="filter-bar-fixed">
+      <button class="filter-chip active" onclick="setFilter('all',this)"><span class="mi mi-sm">apps</span> すべて</button>
+    </div>
+    <div class="filter-bar-scroll">
+      <button class="filter-chip" onclick="setFilter('book',this)"><span class="mi mi-sm">menu_book</span> 本・小説・漫画</button>
+      <button class="filter-chip" onclick="setFilter('video',this)"><span class="mi mi-sm">movie</span> ドラマ・映画</button>
+      <button class="filter-chip" onclick="setFilter('other',this)"><span class="mi mi-sm">category</span> その他</button>
+    </div>
   </div>
 </div>
 
@@ -1816,6 +1823,11 @@ async function selectVideo(i) {
   }
 }
 // ─── 初期化 ───
+function updateHeaderHeight() {
+  const h = document.querySelector('.header')?.offsetHeight || 0;
+  document.documentElement.style.setProperty('--header-h', h + 'px');
+}
+
 async function init() {
   loadItems();
   // IDBからも読み込み（localStorageが空なら復元）
@@ -1836,6 +1848,8 @@ async function init() {
     }
   }
   render();
+  updateHeaderHeight();
+  window.addEventListener("resize", updateHeaderHeight);
 }
 init();
 
