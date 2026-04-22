@@ -1569,7 +1569,10 @@ async function searchBooks(q) {
   candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>');
   try {
     const gbKey = localStorage.getItem('gbooks-api-key') || '';
-    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=20${gbKey ? '&key='+gbKey : ''}`;
+    // ISBNっぽい入力（10〜13桁の数字）は isbn: プレフィックスを付ける
+    const isIsbn = /^[0-9]{10,13}$/.test(q.replace(/-/g,''));
+    const searchQ = isIsbn ? `isbn:${q.replace(/-/g,'')}` : q;
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQ)}&maxResults=20${gbKey ? '&key='+gbKey : ''}`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
     const res = await fetch(url, { signal: controller.signal });
