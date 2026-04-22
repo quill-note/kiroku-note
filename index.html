@@ -425,7 +425,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
       <label class="form-label">タイトル *</label>
       <div style="display:flex;gap:6px;align-items:flex-start">
         <div style="flex:1;position:relative">
-          <input class="form-input" id="fTitle" placeholder="タイトルを入力" oninput="onTitleInput()" oncompositionstart="_isComposing=true" oncompositionend="_isComposing=false;onTitleInput()" autocomplete="off">
+          <input class="form-input" id="fTitle" placeholder="タイトルを入力" oninput="onTitleInput()" autocomplete="off">
           <div class="book-candidates" id="bookCandidates" style="display:none"></div>
         </div>
         <div id="coverPreviewWrap" style="display:none">
@@ -1469,7 +1469,6 @@ function closeStatsListModal() {
 let _selectedCoverUrl = '';
 let _selectedVenue = '';
 let _bookSearchTimer = null;
-let _isComposing = false;
 
 function updateBookSearch() {
   const type = document.getElementById('fType').value;
@@ -1496,8 +1495,6 @@ function onTitleInput() {
   const q = document.getElementById('fTitle').value.trim();
   clearTimeout(_bookSearchTimer);
   const candEl = document.getElementById('bookCandidates');
-  // IME変換中は検索しない
-  if(_isComposing) return;
   candEl._books = null;
   candEl._videos = null;
   if(q.length < 1) {
@@ -1570,7 +1567,7 @@ async function searchBooks(q) {
   try {
     const gbKey = localStorage.getItem('gbooks-api-key') || '';
     // ISBNっぽい入力（10〜13桁の数字）は isbn: プレフィックスを付ける
-    const isIsbn = /^[0-9]{10,13}$/.test(q.replace(/-/g,''));
+    const isIsbn = /^(97[89][0-9]{10}|[0-9]{9}[0-9X])$/.test(q.replace(/-/g,''));
     const searchQ = isIsbn ? `isbn:${q.replace(/-/g,'')}` : q;
     const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQ)}&maxResults=20${gbKey ? '&key='+gbKey : ''}`;
     const controller = new AbortController();
