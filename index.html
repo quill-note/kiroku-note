@@ -1505,7 +1505,7 @@ function onTitleInput() {
   candEl.innerHTML = buildCandidateHTML(q, null);
   if(q.length < 2) return;
   if(type === 'book') {
-    _bookSearchTimer = setTimeout(() => searchBooks(q), 600);
+    _bookSearchTimer = setTimeout(() => searchBooks(q), 300);
   } else if(type === 'video') {
     _bookSearchTimer = setTimeout(() => searchVideos(q), 600);
   }
@@ -1575,14 +1575,24 @@ async function searchBooks(q) {
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
     const data = await res.json();
-    // APIの結果をそのまま使用（単話・分冊を後ろに）
     const rawItems = data.items || [];
-    const bookItems = rawItems.sort((a, b) => {
-      const ta = (a.volumeInfo?.title || '').toLowerCase();
-      const tb = (b.volumeInfo?.title || '').toLowerCase();
-      const sa = ta.includes('単話') || ta.includes('分冊') ? -1 : 0;
-      const sb = tb.includes('単話') || tb.includes('分冊') ? -1 : 0;
-      return sb - sa;
+    const qw = q.toLowerCase().replace(/[・･]/g,'').replace(/[！-～]/g, c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
+    const qWords = qw.split(/[\s　]+/).filter(w=>w.length>0);
+    // 検索語の単語が1つでもタイトルに含まれるものだけ表示
+    const filtered = rawItems.filter(item => {
+      const t = (item.volumeInfo?.title||'').toLowerCase().replace(/[・･]/g,'').replace(/[！-～]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
+      return qWords.some(w => t.includes(w));
+    });
+    const base = filtered.length > 0 ? filtered : rawItems;
+    const bookItems = base.sort((a,b) => {
+      const ta = (a.volumeInfo?.title||'').toLowerCase();
+      const tb = (b.volumeInfo?.title||'').toLowerCase();
+      const q_l = q.toLowerCase();
+      const sa = ta.includes('単話')||ta.includes('分冊') ? -10 : 0;
+      const sb = tb.includes('単話')||tb.includes('分冊') ? -10 : 0;
+      const scoreA = ta===q_l?3:ta.startsWith(q_l)?2:ta.includes(q_l)?1:0;
+      const scoreB = tb===q_l?3:tb.startsWith(q_l)?2:tb.includes(q_l)?1:0;
+      return (scoreB+sb)-(scoreA+sa);
     }).slice(0, 8);
     let apiHTML = '';
     if(!bookItems.length) {
