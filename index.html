@@ -1566,6 +1566,30 @@ async function searchBooks(q) {
   candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">検索中…</div>');
   try {
     const gbKey = localStorage.getItem('gbooks-api-key') || '';
+    // id: プレフィックスはGoogle Books IDで直接取得
+    if(q.startsWith('id:')) {
+      const bookId = q.slice(3).trim();
+      const idUrl = `https://www.googleapis.com/books/v1/volumes/${bookId}${gbKey ? '?key='+gbKey : ''}`;
+      const idRes = await fetch(idUrl);
+      const idData = await idRes.json();
+      if(idData.volumeInfo) {
+        const info = idData.volumeInfo;
+        const thumb = (info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '').replace('http:','https:');
+        const authors = (info.authors||[]).join(', ');
+        const apiHTML = `<div class="book-candidate" onclick="selectBook(0)">
+          ${thumb ? `<img class="book-cand-thumb" src="${thumb}" alt="" onerror="this.style.display='none'">` : `<div class="book-cand-thumb-empty"><span class="mi mi-sm">menu_book</span></div>`}
+          <div class="book-cand-info">
+            <div class="book-cand-title">${esc(info.title||'')}</div>
+            <div class="book-cand-author">${esc(authors)}</div>
+          </div>
+        </div>`;
+        candEl._books = [idData];
+        candEl.innerHTML = buildCandidateHTML(q, apiHTML);
+      } else {
+        candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>');
+      }
+      return;
+    }
     // ISBNっぽい入力（10〜13桁の数字）は isbn: プレフィックスを付ける
     const isIsbn = /^(97[89][0-9]{10}|[0-9]{9}[0-9X])$/.test(q.replace(/-/g,''));
     const searchQ = isIsbn ? `isbn:${q.replace(/-/g,'')}` : q;
