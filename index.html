@@ -361,10 +361,10 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 
 <!-- タブ -->
 <div class="tabs">
-  <button class="tab active" onclick="setTab('want',this)"><span class="mi mi-sm">bookmark_border</span> 気になる</button>
-  <button class="tab" onclick="setTab('done',this)"><span class="mi mi-sm">check_circle_outline</span> 記録</button>
-  <button class="tab" onclick="setTab('all2',this)"><span class="mi mi-sm">list</span> 全部</button>
-  <button class="tab" onclick="setTab('rank',this)"><span class="mi mi-sm">star_border</span> ランキング</button>
+  <button class="tab active" onclick="setTab('want',this)" data-tab="want"><span class="mi mi-sm">bookmark_border</span> 気になる</button>
+  <button class="tab" onclick="setTab('done',this)" data-tab="done"><span class="mi mi-sm">check_circle_outline</span> 記録</button>
+  <button class="tab" onclick="setTab('all2',this)" data-tab="all2"><span class="mi mi-sm">list</span> 全部</button>
+  <button class="tab" onclick="setTab('rank',this)" data-tab="rank"><span class="mi mi-sm">star_border</span> ランキング</button>
 </div>
 
 <!-- 統計 -->
@@ -774,6 +774,7 @@ function setFilter(type, el) {
   render();
 }
 function setTab(tab, el) {
+  if(!el) el = document.querySelector(`.tab[data-tab='${tab}']`);
   currentTabFilter = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
@@ -1569,7 +1570,7 @@ async function searchBooks(q) {
     // id: プレフィックスはGoogle Books IDで直接取得
     if(q.startsWith('id:')) {
       const bookId = q.slice(3).trim();
-      const idUrl = `https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(bookId)}?key=${gbKey || 'AIzaSyBXax1bx4SIeEM-yfVqCunS-8nfFE1MNC0'}`;
+      const idUrl = `https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(bookId)}${gbKey ? '?key='+gbKey : ''}${!gbKey ? '?fields=volumeInfo' : ''}`.replace('?fields','&fields');
       const idRes = await fetch(idUrl);
       const idData = await idRes.json();
       if(idData.volumeInfo) {
@@ -1868,6 +1869,35 @@ window.addEventListener('popstate', e => {
     closeModal();
   }
 });
+
+
+// ─── スワイプでタブ切り替え ───
+(function() {
+  const TAB_ORDER = ['want', 'done', 'all2', 'rank'];
+  let _touchStartX = 0;
+  let _touchStartY = 0;
+
+  document.addEventListener('touchstart', e => {
+    _touchStartX = e.touches[0].clientX;
+    _touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    const modal = document.getElementById('editModal');
+    if(modal && modal.classList.contains('active')) return;
+    const dx = e.changedTouches[0].clientX - _touchStartX;
+    const dy = e.changedTouches[0].clientY - _touchStartY;
+    // 横方向が縦より大きく、50px以上スワイプした場合のみ
+    if(Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const cur = document.querySelector('.tab.active')?.dataset?.tab || TAB_ORDER[0];
+    const idx = TAB_ORDER.indexOf(cur);
+    if(dx < 0 && idx < TAB_ORDER.length - 1) {
+      setTab(TAB_ORDER[idx + 1]);
+    } else if(dx > 0 && idx > 0) {
+      setTab(TAB_ORDER[idx - 1]);
+    }
+  }, { passive: true });
+})();
 
 // ─── タグチップ ───
 let _tagList = [];
