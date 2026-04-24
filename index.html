@@ -1569,17 +1569,15 @@ async function searchBooks(q) {
     // id: プレフィックスはGoogle Books IDで直接取得
     if(q.startsWith('id:')) {
       const bookId = q.slice(3).trim();
-      const idUrl = `https://www.googleapis.com/books/v1/volumes/${bookId}${gbKey ? '?key='+gbKey : ''}`;
+      const idUrl = `https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(bookId)}${gbKey ? '?key='+gbKey : ''}`;
       const idRes = await fetch(idUrl);
       const idData = await idRes.json();
       if(idData.volumeInfo) {
         const info = idData.volumeInfo;
-        // zoom=1で高解像度、なければthumbnail、なければIDから直接構築
-  const rawThumb = info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '';
-  const itemId = bookItems[i]?.id || '';
-  const thumb = rawThumb
-    ? rawThumb.replace('http:','https:').replace('zoom=1','zoom=1')
-    : itemId ? `https://books.google.com/books/content?id=${itemId}&printsec=frontcover&img=1&zoom=1` : '';
+        const rawThumb = info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '';
+        const thumb = rawThumb
+          ? rawThumb.replace('http:','https:')
+          : `https://books.google.com/books/content?id=${bookId}&printsec=frontcover&img=1&zoom=1`;
         const authors = (info.authors||[]).join(', ');
         const apiHTML = `<div class="book-candidate" onclick="selectBook(0)">
           ${thumb ? `<img class="book-cand-thumb" src="${thumb}" alt="" onerror="this.style.display='none'">` : `<div class="book-cand-thumb-empty"><span class="mi mi-sm">menu_book</span></div>`}
