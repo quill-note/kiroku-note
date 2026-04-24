@@ -1574,7 +1574,12 @@ async function searchBooks(q) {
       const idData = await idRes.json();
       if(idData.volumeInfo) {
         const info = idData.volumeInfo;
-        const thumb = (info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '').replace('http:','https:');
+        // zoom=1で高解像度、なければthumbnail、なければIDから直接構築
+  const rawThumb = info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '';
+  const itemId = bookItems[i]?.id || '';
+  const thumb = rawThumb
+    ? rawThumb.replace('http:','https:').replace('zoom=1','zoom=1')
+    : itemId ? `https://books.google.com/books/content?id=${itemId}&printsec=frontcover&img=1&zoom=1` : '';
         const authors = (info.authors||[]).join(', ');
         const apiHTML = `<div class="book-candidate" onclick="selectBook(0)">
           ${thumb ? `<img class="book-cand-thumb" src="${thumb}" alt="" onerror="this.style.display='none'">` : `<div class="book-cand-thumb-empty"><span class="mi mi-sm">menu_book</span></div>`}
@@ -1583,6 +1588,7 @@ async function searchBooks(q) {
             <div class="book-cand-author">${esc(authors)}</div>
           </div>
         </div>`;
+        idData.id = idData.id || bookId;
         candEl._books = [idData];
         candEl.innerHTML = buildCandidateHTML(q, apiHTML);
       } else {
@@ -1626,7 +1632,12 @@ async function searchBooks(q) {
         const info = item.volumeInfo || {};
         const title = info.title || '';
         const authors = (info.authors || []).join(', ');
-        const thumb = (info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '').replace('http:','https:');
+        // zoom=1で高解像度、なければthumbnail、なければIDから直接構築
+  const rawThumb = info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '';
+  const itemId = bookItems[i]?.id || '';
+  const thumb = rawThumb
+    ? rawThumb.replace('http:','https:').replace('zoom=1','zoom=1')
+    : itemId ? `https://books.google.com/books/content?id=${itemId}&printsec=frontcover&img=1&zoom=1` : '';
         const thumbHTML = thumb
           ? `<img class="book-cand-thumb" src="${thumb}" alt="" onerror="this.style.display='none'">`
           : `<div class="book-cand-thumb-empty"><span class="mi mi-sm">menu_book</span></div>`;
@@ -1656,7 +1667,12 @@ function selectBook(i) {
   const authors = (info.authors || []).join(', ');
   if(authors) document.getElementById('fAuthor').value = authors;
   if(info.publisher) document.getElementById('fPublisher').value = info.publisher;
-  const thumb = (info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '').replace('http:','https:');
+  // zoom=1で高解像度、なければthumbnail、なければIDから直接構築
+  const rawThumb = info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || '';
+  const itemId = bookItems[i]?.id || '';
+  const thumb = rawThumb
+    ? rawThumb.replace('http:','https:').replace('zoom=1','zoom=1')
+    : itemId ? `https://books.google.com/books/content?id=${itemId}&printsec=frontcover&img=1&zoom=1` : '';
   _selectedCoverUrl = thumb;
   if(thumb) {
     document.getElementById('coverPreviewWrap').style.display = 'block';
