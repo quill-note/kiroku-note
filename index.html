@@ -1569,7 +1569,7 @@ async function searchBooks(q) {
     // id: プレフィックスはGoogle Books IDで直接取得
     if(q.startsWith('id:')) {
       const bookId = q.slice(3).trim();
-      const idUrl = `https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(bookId)}${gbKey ? '?key='+gbKey : ''}`;
+      const idUrl = `https://www.googleapis.com/books/v1/volumes/${encodeURIComponent(bookId)}?key=${gbKey || 'AIzaSyBXax1bx4SIeEM-yfVqCunS-8nfFE1MNC0'}`;
       const idRes = await fetch(idUrl);
       const idData = await idRes.json();
       if(idData.volumeInfo) {
@@ -1651,7 +1651,7 @@ async function searchBooks(q) {
     candEl._books = bookItems;
     candEl.innerHTML = buildCandidateHTML(q, apiHTML);
   } catch(e) {
-    candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました</div>');
+    candEl.innerHTML = buildCandidateHTML(q, `<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">取得に失敗: ${esc(e.message||String(e))}</div>`);
   }
 }
 
@@ -1765,7 +1765,7 @@ async function searchVideos(q) {
     candEl._videos = results;
     candEl.innerHTML = buildCandidateHTML(q, apiHTML);
   } catch(e) {
-    candEl.innerHTML = buildCandidateHTML(q, '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">取得に失敗しました</div>');
+    candEl.innerHTML = buildCandidateHTML(q, `<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">取得に失敗: ${esc(e.message||String(e))}</div>`);
   }
 }
 
