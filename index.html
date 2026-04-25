@@ -611,9 +611,12 @@ async function saveToGist() {
     if(res.ok){
       const d = await res.json();
       if(!gistId) setGistId(d.id);
-      // 通知なし
+      localStorage.setItem('gist-last-sync', Date.now());
+      renderBackupUI(); // 同期日時を即時更新
+    } else {
+      console.warn('Gist sync failed:', res.status);
     }
-  } catch(e) {}
+  } catch(e) { console.warn('Gist save error:', e); }
 }
 async function loadFromGist() {
   const token = getGistToken(); if(!token) return null;
@@ -676,12 +679,16 @@ function renderBackupUI() {
   const gistId = getGistId();
   const connected = !!(token && gistId);
   const statusHtml = connected
-    ? `<span style="color:var(--success);font-weight:600"><span class="mi mi-sm">cloud_done</span> 接続済み</span>`
+    ? `<span style="color:var(--success);font-weight:600"><span class="mi mi-sm">cloud_done</span> 接続済み${lastSyncStr ? ' · 最終同期: '+lastSyncStr : ''}</span>`
     : token
     ? `<span style="color:var(--warn);font-weight:600"><span class="mi mi-sm">cloud_upload</span> トークン設定済（初回保存で接続）</span>`
     : `<span style="color:var(--text3)"><span class="mi mi-sm">cloud_off</span> 未設定</span>`;
   const gbKey = localStorage.getItem('gbooks-api-key') || '';
   const tmdbKey = localStorage.getItem('tmdb-api-key') || '';
+  const lastSync = localStorage.getItem('gist-last-sync');
+  const lastSyncStr = lastSync
+    ? new Date(Number(lastSync)).toLocaleString('ja-JP', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})
+    : null;
   document.getElementById('backupSection').innerHTML = `
     <div style="font-size:12px;margin-bottom:8px">状態: ${statusHtml}</div>
     ${!token ? `
@@ -697,6 +704,14 @@ function renderBackupUI() {
       </div>
       <button onclick="clearGistToken()" class="btn-secondary" style="width:100%;padding:10px;font-size:12px">トークンをリセット</button>
     `}
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px"><span class="mi mi-sm">import_export</span> データのバックアップ</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="exportData()" class="btn-primary" style="flex:1;padding:10px;font-size:13px"><span class="mi mi-sm">download</span> 書き出し</button>
+        <button onclick="importData()" class="btn-secondary" style="flex:1;padding:10px;font-size:13px"><span class="mi mi-sm">upload</span> 読み込み</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px">JSONファイルとして保存・復元できます</div>
+    </div>
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
       <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px"><span class="mi mi-sm">menu_book</span> 書影検索 APIキー（Google Books）</div>
       <div style="display:flex;gap:6px">
@@ -1899,6 +1914,49 @@ window.addEventListener('popstate', e => {
     }
   }, { passive: true });
 })();
+
+
+// ─── エクスポート・インポート ───
+function exportData() {
+  const data = JSON.stringify({ items, savedAt: Date.now(), version: 1 }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `kiroku-note-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('エクスポートしました', 'download');
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const imported = data.items || data;
+      if(!Array.isArray(imported)) { showToast('形式が正しくありません', 'error'); return; }
+      if(confirm(`${imported.length}件のデータをインポートします。現在のデータに追加しますか？`)) {
+        // 既存IDと重複しないものだけ追加
+        const existIds = new Set(items.map(i => i.id));
+        const newItems = imported.filter(i => i.id && !existIds.has(i.id));
+        items = [...newItems, ...items];
+        saveItems();
+        render();
+        showToast(`${newItems.length}件追加しました`, 'check_circle');
+      }
+    } catch(e) {
+      showToast('読み込みに失敗しました', 'error');
+    }
+  };
+  input.click();
+}
 
 // ─── タグチップ ───
 let _tagList = [];
