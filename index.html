@@ -309,7 +309,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .star-wrap { display:inline-block; cursor:pointer; }
 .star-half-wrap { position:relative; display:inline-block; font-size:16px; }
 .star-half-fill { position:absolute; left:0; top:0; width:50%; overflow:hidden; color:#f0b429; }
-.star-half-base { color:#ddd; }
+.star-half-base { color: #ddd; }
 
 .star-half-btn, .star-full-btn {
   font-size: 22px; cursor: pointer; color: #ddd;
@@ -467,10 +467,18 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
     </div>
     <div class="form-group">
       <label class="form-label"><span class="mi mi-sm">event</span> 読了・視聴日（任意）</label>
-      <div style="display:flex;gap:6px;align-items:center">
-        <select class="form-select" id="fDateY" style="flex:2"></select>
-        <select class="form-select" id="fDateM" style="flex:1.5"></select>
-        <select class="form-select" id="fDateD" style="flex:1.5"></select>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="fDatePicker" class="form-input" style="flex:1;cursor:pointer" readonly
+          onclick="openCalendar()" placeholder="日付を選択" value="">
+        <button type="button" onclick="clearDate()" id="fDateClearBtn"
+          style="display:none;background:var(--primary-pale);border:1.5px solid var(--primary-light);border-radius:50%;width:26px;height:26px;flex-shrink:0;align-items:center;justify-content:center;cursor:pointer;padding:0">
+          <span style="color:var(--primary);font-size:13px;line-height:1">×</span>
+        </button>
+      </div>
+      <div style="display:none">
+        <select id="fDateY"></select>
+        <select id="fDateM"></select>
+        <select id="fDateD"></select>
       </div>
     </div>
     <div class="form-group">
@@ -537,6 +545,32 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
       <button onclick="closeSortSheet()" style="background:none;border:none;cursor:pointer;color:var(--text3)"><span class="mi">close</span></button>
     </div>
     <div id="sortOptions"></div>
+  </div>
+</div>
+
+
+<!-- カスタムカレンダー -->
+<div id="customCalendar" style="display:none;position:fixed;inset:0;background:rgba(74,37,37,0.3);z-index:400;align-items:center;justify-content:center" onclick="if(event.target===this)closeCalendar()">
+  <div style="background:var(--surface);border-radius:20px;width:320px;max-width:92vw;padding:16px;box-shadow:0 8px 32px rgba(0,0,0,0.18)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button onclick="calNav(-1)" style="background:var(--primary-pale);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--primary)">‹</button>
+      <span id="calTitle" style="font-weight:700;font-size:15px;color:var(--text)"></span>
+      <button onclick="calNav(1)" style="background:var(--primary-pale);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;color:var(--primary)">›</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
+      <div style="text-align:center;font-size:11px;color:var(--text3);padding:4px">日</div>
+      <div style="text-align:center;font-size:11px;color:var(--text3);padding:4px">月</div>
+      <div style="text-align:center;font-size:11px;color:var(--text3);padding:4px">火</div>
+      <div style="text-align:center;font-size:11px;color:var(--text3);padding:4px">水</div>
+      <div style="text-align:center;font-size:11px;color:var(--text3);padding:4px">木</div>
+      <div style="text-align:center;font-size:11px;color:var(--text3);padding:4px">金</div>
+      <div style="text-align:center;font-size:11px;color:var(--text3);padding:4px">土</div>
+    </div>
+    <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:12px">
+      <button onclick="calSelectToday()" style="background:none;border:none;color:var(--primary);font-size:13px;font-weight:600;cursor:pointer;padding:4px 8px">今日</button>
+      <button onclick="closeCalendar()" style="background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;padding:4px 8px">キャンセル</button>
+    </div>
   </div>
 </div>
 
@@ -1851,6 +1885,12 @@ async function init() {
   render();
   updateHeaderHeight();
   window.addEventListener('resize', updateHeaderHeight);
+  // 日付ピッカーの最大値を今日に設定
+  const todayStr = new Date().toISOString().slice(0,10);
+  const dp = document.getElementById('fDatePicker');
+  if(dp) dp.max = todayStr;
+  const clearBtn = document.getElementById('fDateClearBtn');
+  if(clearBtn) clearBtn.style.display = 'none';
 }
 
 // ─── ブラウザバック対応 ───
@@ -1956,6 +1996,134 @@ function importData() {
     }
   };
   input.click();
+}
+
+
+// ─── 日付ピッカー ───
+function onDatePickerChange() {
+  const val = document.getElementById('fDatePicker').value;
+  const btn = document.getElementById('fDateClearBtn');
+  if(btn) btn.style.display = val ? 'flex' : 'none';
+  if(!val) { clearDate(); return; }
+  const [y, m, d] = val.split('-');
+  document.getElementById('fDateY').value = y;
+  document.getElementById('fDateM').value = String(parseInt(m));
+  document.getElementById('fDateD').value = String(parseInt(d));
+  // 表示用に変換
+  document.getElementById('fDatePicker').value = `${y}年${parseInt(m)}月${parseInt(d)}日`;
+  document.getElementById('fDatePicker').dataset.rawVal = val;
+}
+
+function setDateToday() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth() + 1;
+  const d = now.getDate();
+  const pad = n => String(n).padStart(2, '0');
+  document.getElementById('fDatePicker').value = `${y}-${pad(m)}-${pad(d)}`;
+  document.getElementById('fDateY').value = String(y);
+  document.getElementById('fDateM').value = String(m);
+  document.getElementById('fDateD').value = String(d);
+}
+
+function clearDate() {
+  document.getElementById('fDatePicker').value = '';
+  const btn = document.getElementById('fDateClearBtn');
+  if(btn) btn.style.display = 'none';
+  document.getElementById('fDateY').value = '';
+  document.getElementById('fDateM').value = '';
+  document.getElementById('fDateD').value = '';
+  if(document.getElementById('fDatePicker')) document.getElementById('fDatePicker').value = '';
+}
+
+function syncDatePickerFromSelects(y, m, d) {
+  const picker = document.getElementById('fDatePicker');
+  const btn = document.getElementById('fDateClearBtn');
+  if(y && m && d) {
+    const pad = n => String(n).padStart(2, '0');
+    picker.dataset.rawVal = `${y}-${pad(m)}-${pad(d)}`;
+    picker.value = `${y}年${parseInt(m)}月${parseInt(d)}日`;
+    if(btn) btn.style.display = 'flex';
+  } else {
+    picker.value = '';
+    picker.dataset.rawVal = '';
+    if(btn) btn.style.display = 'none';
+  }
+}
+
+
+// ─── カスタムカレンダー ───
+let _calYear = 0, _calMonth = 0;
+
+function openCalendar() {
+  const picker = document.getElementById('fDatePicker');
+  const now = new Date();
+  const rawVal = picker.dataset.rawVal || '';
+  if(rawVal) {
+    const [y,m] = rawVal.split('-').map(Number);
+    _calYear = y; _calMonth = m - 1;
+  } else {
+    _calYear = now.getFullYear(); _calMonth = now.getMonth();
+  }
+  renderCalendar();
+  document.getElementById('customCalendar').style.display = 'flex';
+}
+
+function closeCalendar() {
+  document.getElementById('customCalendar').style.display = 'none';
+}
+
+function calNav(delta) {
+  _calMonth += delta;
+  if(_calMonth < 0) { _calMonth = 11; _calYear--; }
+  if(_calMonth > 11) { _calMonth = 0; _calYear++; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  document.getElementById('calTitle').textContent = `${_calYear}年${_calMonth+1}月`;
+  const grid = document.getElementById('calGrid');
+  const today = new Date();
+  const picker = document.getElementById('fDatePicker');
+  const selectedVal = picker.value;
+  const firstDay = new Date(_calYear, _calMonth, 1).getDay();
+  const daysInMonth = new Date(_calYear, _calMonth+1, 0).getDate();
+  let html = '';
+  for(let i=0; i<firstDay; i++) html += '<div></div>';
+  for(let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${_calYear}-${String(_calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = today.getFullYear()===_calYear && today.getMonth()===_calMonth && today.getDate()===d;
+    const isSelected = dateStr === selectedVal;
+    const isFuture = new Date(_calYear, _calMonth, d) > today;
+    const color = isFuture ? 'var(--border)' : isSelected ? '#fff' : isToday ? 'var(--primary)' : 'var(--text)';
+    const bg = isSelected ? 'var(--primary)' : isToday ? 'var(--primary-pale)' : 'transparent';
+    const border = isToday && !isSelected ? '1.5px solid var(--primary-light)' : 'none';
+    const onclick = isFuture ? '' : `onclick="calPickDate('${dateStr}')"`;
+    html += `<button ${onclick}
+      style="aspect-ratio:1;border-radius:50%;border:${border};background:${bg};color:${color};font-size:13px;cursor:${isFuture?'default':'pointer'};padding:0;font-weight:${isToday||isSelected?'700':'400'}"
+      ${isFuture?'disabled':''}>${d}</button>`;
+  }
+  grid.innerHTML = html;
+}
+
+function calPickDate(dateStr) {
+  const picker = document.getElementById('fDatePicker');
+  picker.dataset.rawVal = dateStr;
+  const [y,m,d] = dateStr.split('-');
+  picker.value = `${y}年${parseInt(m)}月${parseInt(d)}日`;
+  const btn = document.getElementById('fDateClearBtn');
+  if(btn) btn.style.display = 'flex';
+  document.getElementById('fDateY').value = y;
+  document.getElementById('fDateM').value = String(parseInt(m));
+  document.getElementById('fDateD').value = String(parseInt(d));
+  renderCalendar();
+  closeCalendar();
+}
+
+function calSelectToday() {
+  const t = new Date();
+  const dateStr = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  calPickDate(dateStr);
 }
 
 // ─── タグチップ ───
@@ -2129,6 +2297,12 @@ async function init() {
   render();
   updateHeaderHeight();
   window.addEventListener('resize', updateHeaderHeight);
+  // 日付ピッカーの最大値を今日に設定
+  const todayStr = new Date().toISOString().slice(0,10);
+  const dp = document.getElementById('fDatePicker');
+  if(dp) dp.max = todayStr;
+  const clearBtn = document.getElementById('fDateClearBtn');
+  if(clearBtn) clearBtn.style.display = 'none';
 }
 init();
 
