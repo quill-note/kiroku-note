@@ -1141,6 +1141,20 @@ function setDateSelects(dateObj) {
   document.getElementById('fDateY').value = dateObj?.y || '';
   document.getElementById('fDateM').value = dateObj?.m || '';
   document.getElementById('fDateD').value = dateObj?.d || '';
+  // 見えているテキスト欄・クリアボタンも中身に合わせて同期
+  const dp = document.getElementById('fDatePicker');
+  const btn = document.getElementById('fDateClearBtn');
+  const hasDate = !!(dateObj && (dateObj.y || dateObj.m || dateObj.d));
+  if(dp) {
+    dp.value = hasDate ? formatDate(dateObj) : '';
+    if(hasDate && dateObj.y && dateObj.m && dateObj.d) {
+      const pad = n => String(n).padStart(2, '0');
+      dp.dataset.rawVal = `${dateObj.y}-${pad(dateObj.m)}-${pad(dateObj.d)}`;
+    } else {
+      delete dp.dataset.rawVal;
+    }
+  }
+  if(btn) btn.style.display = hasDate ? 'flex' : 'none';
 }
 function getDateFromSelects() {
   const y = document.getElementById('fDateY').value;
