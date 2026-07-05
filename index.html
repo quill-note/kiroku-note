@@ -105,7 +105,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .btn-card { width: 28px; height: 28px; border-radius: 50%; border: none; background: none; color: var(--text3); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
 .btn-card:hover { background: var(--surface2); color: var(--primary); }
 
-.card-meta { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; align-items: center; }
+.card-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; align-items: center; }
 .badge-type { font-size: 11px; padding: 2px 8px; border-radius: 8px; font-weight: 600; }
 .badge-novel { background: #fce8e5; color: #c4474a; }
 .badge-movie { background: #e8f0fd; color: #3b6dbf; }
@@ -122,16 +122,21 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .badge-sub { font-size: 11px; padding: 2px 8px; border-radius: 8px; font-weight: 600; background: #eef1f4; color: #55606b; }
 .badge-pri { font-size: 11px; padding: 2px 8px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 2px; }
 .badge-pri-meter { background: none; padding: 0; display: inline-flex; align-items: center; }
+.badge-pri-seg { background: none; padding: 0; display: inline-flex; align-items: center; gap: 3px; }
+.pri-seg-mini { width: 10px; height: 2px; border-radius: 2px; background: #ddd; }
+.pri-seg-mini.on { background: var(--primary); }
 .pri-meter-track { display: inline-block; width: 40px; height: 6px; border-radius: 999px; background: #f0e2e0; overflow: hidden; }
 .pri-meter-fill { display: block; height: 100%; border-radius: 999px; background: var(--primary); }
-.badge-pri-hold { background: #f2f0f0; color: #a39c9c; }
+.badge-pri-hold { background: #f2f0f0; color: #a39c9c; padding: 2px 10px; border-radius: 8px; }
 /* 優先度入力（セグメントメーター） */
-.pri-seg { display: flex; gap: 4px; flex: 1; }
-.pri-seg-cell { flex: 1; height: 16px; border-radius: 6px; background: #f0e2e0; cursor: pointer; transition: background 0.1s; }
+.pri-seg { display: flex; gap: 4px; width: 100px; flex: none; }
+.pri-seg-cell { flex: 1; height: 4px; border-radius: 2px; background: #ddd; cursor: pointer; transition: background 0.1s; }
 .pri-seg-cell.on { background: var(--primary); }
-.pri-later-btn { padding: 8px 16px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2); border-radius: 999px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
-.pri-later-btn.active { border-color: var(--primary); background: var(--primary-pale); color: var(--primary); }
 .pri-seg-label { font-size: 12px; color: var(--text3); margin-top: 6px; }
+.pri-later-check { display: inline-flex; align-items: center; gap: 3px; font-size: 13px; color: var(--text2); cursor: pointer; user-select: none; }
+.pri-later-check .mi { font-size: 18px; color: var(--text3); }
+.pri-later-check.active { color: var(--primary); }
+.pri-later-check.active .mi { color: var(--primary); }
 /* 優先度選択ボタン */
 .pri-row { display: flex; gap: 6px; }
 .pri-btn { flex: 1; padding: 9px 2px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2); border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
@@ -202,6 +207,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .privacy-mode .card-cover { filter: blur(4px); }
 .privacy-mode .card-memo { display: none; }
 .privacy-mode .badge-pri { display: none; }
+.privacy-mode .hold-toggle, .privacy-mode #holdList { display: none !important; }
 .nav-icon { font-size: 22px; }
 
 /* ページ */
@@ -455,21 +461,21 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
       </div>
     </div>
     <div class="form-group" id="fSubTypeGroup" style="display:none">
-      <label class="form-label"><span class="mi mi-sm">sell</span> 種別</label>
+      <label class="form-label">種別</label>
       <div class="venue-group" id="fSubTypeChips"></div>
       <input type="hidden" id="fSubType">
     </div>
     <div class="form-group" id="fPriorityGroup">
-      <label class="form-label"><span class="mi mi-sm">flag</span> 読みたい度</label>
-      <div style="display:flex;align-items:center;gap:10px">
+      <label class="form-label">読みたい度</label>
+      <div style="display:flex;align-items:center;gap:12px">
         <div class="pri-seg" id="priSeg">
           <span class="pri-seg-cell" onclick="setPriority('low')"></span>
           <span class="pri-seg-cell" onclick="setPriority('mid')"></span>
           <span class="pri-seg-cell" onclick="setPriority('high')"></span>
         </div>
-        <button type="button" class="pri-later-btn" id="priLaterBtn" onclick="togglePriorityLater()">あとで</button>
+        <span class="pri-later-check" id="priLaterBtn" onclick="togglePriorityLater()"><span class="mi mi-sm" id="priLaterCheck">check_box_outline_blank</span> あとで</span>
       </div>
-      <div class="pri-seg-label" id="priSegLabel">まあまあ</div>
+      <div class="pri-seg-label" id="priSegLabel">中</div>
     </div>
     <div class="form-group book-search-wrap" id="bookSearchWrap">
       <label class="form-label">タイトル *</label>
@@ -948,7 +954,7 @@ function render() {
     if(holdItems.length) {
       const holdSorted = getSorted(holdItems);
       html += `<div class="hold-toggle" onclick="toggleHold()"><span class="mi mi-sm" id="holdChevron">expand_more</span> あとで（${holdItems.length}）</div>`
-        + `<div id="holdList" style="display:none">${holdSorted.map(it => cardHTML(it)).join('')}</div>`;
+        + `<div id="holdList" style="display:none;flex-direction:column;gap:10px">${holdSorted.map(it => cardHTML(it)).join('')}</div>`;
     }
     list.innerHTML = html;
   } else {
@@ -960,7 +966,7 @@ function toggleHold() {
   const c = document.getElementById('holdChevron');
   if(!l) return;
   const open = l.style.display !== 'none';
-  l.style.display = open ? 'none' : 'block';
+  l.style.display = open ? 'none' : 'flex';
   if(c) c.textContent = open ? 'expand_more' : 'expand_less';
 }
 
@@ -1032,11 +1038,11 @@ function cardHTML(it) {
   const catLabel = subName || typeLabel;
   let priBadge = '';
   if(it.status === 'want') {
-    const meter = lv => `<span class="badge-pri badge-pri-meter" title="読みたい度"><span class="pri-meter-track"><span class="pri-meter-fill" style="width:${lv}%"></span></span></span>`;
-    if(it.priority === 'high')      priBadge = meter(100);
-    else if(it.priority === 'low')  priBadge = meter(33);
+    const seg = lv => `<span class="badge-pri badge-pri-seg" title="読みたい度">${[1,2,3].map(i=>`<span class="pri-seg-mini${i<=lv?' on':''}"></span>`).join('')}</span>`;
+    if(it.priority === 'high')      priBadge = seg(3);
+    else if(it.priority === 'low')  priBadge = seg(1);
     else if(it.priority === 'hold') priBadge = '<span class="badge-pri badge-pri-hold">あとで</span>';
-    else                            priBadge = meter(66);
+    else                            priBadge = seg(2);
   }
   // metaRowを2行に分ける：1行目=種類・ステータス・★、2行目=視聴場所・公開年・視聴日
   const metaRow1 = `<div class="card-meta">
@@ -1158,7 +1164,7 @@ let _rereadTemp = 0;
 let _priorityTemp = 'mid';
 
 const PRI_LEVEL = { low:1, mid:2, high:3 };
-const PRI_TEXT  = { high:'とても', mid:'まあまあ', low:'そこまで', hold:'あとで' };
+const PRI_TEXT  = { high:'高', mid:'中', low:'低', hold:'あとで' };
 function setPriority(p) { _priorityTemp = p; renderPriorityButtons(); }
 function togglePriorityLater() { _priorityTemp = (_priorityTemp === 'hold') ? 'mid' : 'hold'; renderPriorityButtons(); }
 function renderPriorityButtons() {
@@ -1169,8 +1175,10 @@ function renderPriorityButtons() {
   seg.querySelectorAll('.pri-seg-cell').forEach((c, i) => c.classList.toggle('on', i < lv));
   const later = document.getElementById('priLaterBtn');
   if(later) later.classList.toggle('active', isHold);
+  const check = document.getElementById('priLaterCheck');
+  if(check) check.textContent = isHold ? 'check_box' : 'check_box_outline_blank';
   const label = document.getElementById('priSegLabel');
-  if(label) label.textContent = PRI_TEXT[_priorityTemp] || 'まあまあ';
+  if(label) label.textContent = isHold ? '' : (PRI_TEXT[_priorityTemp] || '中');
 }
 function updatePriorityVisibility() {
   const isWant = document.getElementById('fStatus').value === 'want';
