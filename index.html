@@ -122,13 +122,14 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .badge-sub { font-size: 11px; padding: 2px 8px; border-radius: 8px; font-weight: 600; background: #eef1f4; color: #55606b; }
 .badge-pri { font-size: 11px; padding: 2px 8px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 2px; }
 .badge-pri-high { background: #ffe3d6; color: #c4561f; }
-.badge-pri-low  { background: #eef0f2; color: #7a8590; }
+.badge-pri-mid  { background: #fdf3d7; color: #a07d1c; }
+.badge-pri-low  { background: #e3edf7; color: #4a7ab5; }
 .badge-pri-hold { background: #f2f0f0; color: #a39c9c; }
 /* 優先度選択ボタン */
 .pri-row { display: flex; gap: 6px; }
 .pri-btn { flex: 1; padding: 9px 2px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2); border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
 .pri-btn.active { border-color: var(--primary); background: var(--primary-pale); color: var(--primary); }
-/* 「今はいらない」折りたたみ */
+/* 「あとで」折りたたみ */
 .hold-toggle { padding: 11px 14px; margin: 8px 0 4px; color: var(--text3); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; background: var(--surface2); border-radius: 10px; }
 /* サブ種別管理チップ */
 .sub-manage-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; padding: 6px 10px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 999px; color: var(--text2); }
@@ -447,18 +448,17 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
     </div>
     <div class="form-group" id="fSubTypeGroup" style="display:none">
       <label class="form-label"><span class="mi mi-sm">sell</span> 種別</label>
-      <select class="form-select" id="fSubType">
-        <option value="">未分類</option>
-      </select>
+      <div class="venue-group" id="fSubTypeChips"></div>
+      <input type="hidden" id="fSubType">
     </div>
     <div class="form-group" id="fPriorityGroup">
       <label class="form-label"><span class="mi mi-sm">flag</span> 優先度</label>
-      <div class="pri-row">
-        <button type="button" class="pri-btn" data-p="high" onclick="setPriority('high')">高</button>
-        <button type="button" class="pri-btn" data-p="mid"  onclick="setPriority('mid')">中</button>
-        <button type="button" class="pri-btn" data-p="low"  onclick="setPriority('low')">低</button>
-        <button type="button" class="pri-btn" data-p="hold" onclick="setPriority('hold')">今はいらない</button>
-      </div>
+      <select class="form-select" id="fPrioritySelect" onchange="_priorityTemp=this.value">
+        <option value="high">高</option>
+        <option value="mid">中</option>
+        <option value="low">低</option>
+        <option value="hold">あとで</option>
+      </select>
     </div>
     <div class="form-group book-search-wrap" id="bookSearchWrap">
       <label class="form-label">タイトル *</label>
@@ -936,7 +936,7 @@ function render() {
     let html = ranked.map(it => cardHTML(it)).join('');
     if(holdItems.length) {
       const holdSorted = getSorted(holdItems);
-      html += `<div class="hold-toggle" onclick="toggleHold()"><span class="mi mi-sm" id="holdChevron">expand_more</span> 今はいらない（${holdItems.length}）</div>`
+      html += `<div class="hold-toggle" onclick="toggleHold()"><span class="mi mi-sm" id="holdChevron">expand_more</span> あとで（${holdItems.length}）</div>`
         + `<div id="holdList" style="display:none">${holdSorted.map(it => cardHTML(it)).join('')}</div>`;
     }
     list.innerHTML = html;
@@ -1017,17 +1017,18 @@ function cardHTML(it) {
   const typeLabel = TYPE_LABEL[it.type]||'';
   const statusClass = STATUS_CLASS[it.status]||'badge-want';
   const statusIcon = STATUS_ICON[it.status]||'help_outline';
-  const subBadge = (it.subType||'').trim() ? `<span class="badge-sub">${esc(it.subType)}</span>` : '';
+  const subName = (it.subType||'').trim();
+  const catLabel = subName || typeLabel;
   let priBadge = '';
   if(it.status === 'want') {
     if(it.priority === 'high')      priBadge = '<span class="badge-pri badge-pri-high"><span class="mi mi-sm">flag</span>高</span>';
     else if(it.priority === 'low')  priBadge = '<span class="badge-pri badge-pri-low">低</span>';
-    else if(it.priority === 'hold') priBadge = '<span class="badge-pri badge-pri-hold">今はいらない</span>';
+    else if(it.priority === 'hold') priBadge = '<span class="badge-pri badge-pri-hold">あとで</span>';
+    else                            priBadge = '<span class="badge-pri badge-pri-mid">中</span>';
   }
   // metaRowを2行に分ける：1行目=種類・ステータス・★、2行目=視聴場所・公開年・視聴日
   const metaRow1 = `<div class="card-meta">
-    <span class="badge-type ${typeClass}"><span class="mi mi-sm">${typeIcon}</span> ${typeLabel}</span>
-    ${subBadge}
+    <span class="badge-type ${typeClass}"><span class="mi mi-sm">${typeIcon}</span> ${esc(catLabel)}</span>
     <span class="badge-status ${statusClass}"><span class="mi mi-sm">${statusIcon}</span> ${getStatusLabel(it.status,it.type)}</span>
     ${priBadge}
     ${starRow}
@@ -1078,7 +1079,7 @@ function renderRank() {
       <div class="rank-num ${numClass(i)}">${i+1}</div>
       <div class="rank-info">
         <div class="rank-title">${esc(it.title)}</div>
-        <div class="rank-sub"><span class="mi mi-sm">${TYPE_ICON[it.type]||'category'}</span> ${TYPE_LABEL[it.type]||''}${it.author?' · '+esc(it.author):''}</div>
+        <div class="rank-sub"><span class="mi mi-sm">${TYPE_ICON[it.type]||'category'}</span> ${esc(categoryLabel(it))}${it.author?' · '+esc(it.author):''}</div>
         <div class="stars" style="margin-top:4px">${starsHTML(it.star)}</div>
       </div>
     </div>
@@ -1146,24 +1147,36 @@ let _priorityTemp = 'mid';
 
 function setPriority(p) { _priorityTemp = p; renderPriorityButtons(); }
 function renderPriorityButtons() {
-  document.querySelectorAll('#fPriorityGroup .pri-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.p === _priorityTemp);
-  });
+  const sel = document.getElementById('fPrioritySelect');
+  if(sel) sel.value = _priorityTemp;
 }
 function updatePriorityVisibility() {
   const isWant = document.getElementById('fStatus').value === 'want';
   document.getElementById('fPriorityGroup').style.display = isWant ? 'block' : 'none';
 }
+function setSubType(name) {
+  const cur = document.getElementById('fSubType').value;
+  document.getElementById('fSubType').value = (cur === name) ? '' : name;
+  renderSubTypeChips();
+}
+function renderSubTypeChips() {
+  const type = document.getElementById('fType').value;
+  const list = [...(getSubTypes()[type] || [])];
+  const cur = document.getElementById('fSubType').value;
+  if(cur && !list.includes(cur)) list.push(cur);
+  const grp = document.getElementById('fSubTypeGroup');
+  if(!list.length) { grp.style.display = 'none'; return; }
+  grp.style.display = 'block';
+  document.getElementById('fSubTypeChips').innerHTML = list.map(s =>
+    `<button type="button" class="venue-btn${cur===s?' active':''}" onclick="setSubType('${esc(s).replace(/'/g,"\\'")}')">${esc(s)}</button>`
+  ).join('');
+}
 function updateSubTypeOptions() {
   const type = document.getElementById('fType').value;
   const list = getSubTypes()[type] || [];
-  const grp = document.getElementById('fSubTypeGroup');
-  const sel = document.getElementById('fSubType');
-  const cur = sel.value;
-  if(!list.length) { grp.style.display = 'none'; sel.innerHTML = '<option value="">未分類</option>'; return; }
-  grp.style.display = 'block';
-  sel.innerHTML = '<option value="">未分類</option>' + list.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
-  if([...sel.options].some(o => o.value === cur)) sel.value = cur;
+  const cur = document.getElementById('fSubType').value;
+  if(cur && !list.includes(cur)) document.getElementById('fSubType').value = '';
+  renderSubTypeChips();
 }
 function openAddModal() {
   editingId = null;
@@ -1198,6 +1211,7 @@ function openAddModal() {
   renderPriorityButtons();
   updatePriorityVisibility();
   document.getElementById('fSubType').value = '';
+  renderSubTypeChips();
   document.getElementById('editModal').classList.add('active');
   pushModalState();
   setTimeout(()=>document.getElementById('fTitle').focus(),100);
@@ -1230,15 +1244,8 @@ function openEdit(id) {
   _priorityTemp = it.priority || 'mid';
   renderPriorityButtons();
   updatePriorityVisibility();
-  {
-    const subSel = document.getElementById('fSubType');
-    const subVal = it.subType || '';
-    if(subVal && ![...subSel.options].some(o => o.value === subVal)) {
-      subSel.insertAdjacentHTML('beforeend', `<option value="${esc(subVal)}">${esc(subVal)}</option>`);
-      document.getElementById('fSubTypeGroup').style.display = 'block';
-    }
-    subSel.value = subVal;
-  }
+  document.getElementById('fSubType').value = it.subType || '';
+  renderSubTypeChips();
   if(it.coverUrl){document.getElementById('coverPreviewWrap').style.display='block';document.getElementById('coverPreviewImg').src=it.coverUrl;}else{document.getElementById('coverPreviewWrap').style.display='none';}
   document.getElementById('editModal').classList.add('active');
   pushModalState();
