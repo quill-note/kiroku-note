@@ -118,6 +118,25 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .badge-progress { background: #fff8e1; color: var(--warn); }
 .badge-done { background: #e8f5e9; color: var(--success); }
 
+/* サブ種別・優先度バッジ */
+.badge-sub { font-size: 11px; padding: 2px 8px; border-radius: 8px; font-weight: 600; background: #eef1f4; color: #55606b; }
+.badge-pri { font-size: 11px; padding: 2px 8px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 2px; }
+.badge-pri-high { background: #ffe3d6; color: #c4561f; }
+.badge-pri-low  { background: #eef0f2; color: #7a8590; }
+.badge-pri-hold { background: #f2f0f0; color: #a39c9c; }
+/* 優先度選択ボタン */
+.pri-row { display: flex; gap: 6px; }
+.pri-btn { flex: 1; padding: 9px 2px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2); border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.pri-btn.active { border-color: var(--primary); background: var(--primary-pale); color: var(--primary); }
+/* 「今はいらない」折りたたみ */
+.hold-toggle { padding: 11px 14px; margin: 8px 0 4px; color: var(--text3); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; background: var(--surface2); border-radius: 10px; }
+/* サブ種別管理チップ */
+.sub-manage-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; padding: 6px 10px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 999px; color: var(--text2); }
+.sub-manage-chip .mi { cursor: pointer; color: var(--text3); }
+.stats-sub-line { font-size: 11px; color: var(--text3); margin: 2px 0 6px; padding-left: 2px; }
+.stats-sub-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
+.stats-sub-chips .sfl-btn { font-size: 11px; padding: 3px 9px; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; color: var(--text2); }
+
 .card-author { font-size: 12px; color: var(--text3); margin-bottom: 6px; }
 
 /* 星評価 */
@@ -173,6 +192,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .nav-item.active { color: var(--primary); }
 .privacy-mode .stars { visibility: hidden; }
 .privacy-mode .card-cover { filter: blur(4px); }
+.privacy-mode .card-memo { display: none; }
 .nav-icon { font-size: 22px; }
 
 /* ページ */
@@ -385,7 +405,10 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 <!-- ページ: 統計 -->
 <div class="page" id="pageStats">
   <div id="statsContent" style="padding:16px;display:flex;flex-direction:column;gap:14px"></div>
-  <div style="padding:0 16px 24px;text-align:center"><button onclick="openBackupModal()" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px"><span class="mi" style="font-size:14px">cloud_sync</span> バックアップ設定</button></div>
+  <div style="padding:4px 16px 28px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
+    <button onclick="openSubTypeModal()" style="background:var(--surface2);border:1.5px solid var(--border);border-radius:999px;color:var(--text2);font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:10px 18px;min-height:40px"><span class="mi" style="font-size:15px">sell</span> 種別を編集</button>
+    <button onclick="openBackupModal()" style="background:var(--surface2);border:1.5px solid var(--border);border-radius:999px;color:var(--text2);font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:10px 18px;min-height:40px"><span class="mi" style="font-size:15px">cloud_sync</span> バックアップ設定</button>
+  </div>
 </div>
 
 <!-- FAB -->
@@ -416,10 +439,25 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
       </div>
       <div class="form-group" style="flex:1">
         <label class="form-label">ステータス</label>
-        <select class="form-select" id="fStatus">
+        <select class="form-select" id="fStatus" onchange="updatePriorityVisibility()">
           <option value="want">読みたい・見たい</option>
           <option value="done">読んだ・見た</option>
         </select>
+      </div>
+    </div>
+    <div class="form-group" id="fSubTypeGroup" style="display:none">
+      <label class="form-label"><span class="mi mi-sm">sell</span> 種別</label>
+      <select class="form-select" id="fSubType">
+        <option value="">未分類</option>
+      </select>
+    </div>
+    <div class="form-group" id="fPriorityGroup">
+      <label class="form-label"><span class="mi mi-sm">flag</span> 優先度</label>
+      <div class="pri-row">
+        <button type="button" class="pri-btn" data-p="high" onclick="setPriority('high')">高</button>
+        <button type="button" class="pri-btn" data-p="mid"  onclick="setPriority('mid')">中</button>
+        <button type="button" class="pri-btn" data-p="low"  onclick="setPriority('low')">低</button>
+        <button type="button" class="pri-btn" data-p="hold" onclick="setPriority('hold')">今はいらない</button>
       </div>
     </div>
     <div class="form-group book-search-wrap" id="bookSearchWrap">
@@ -514,6 +552,18 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
   </div>
 </div>
 
+
+<!-- サブ種別管理モーダル -->
+<div class="modal-overlay" id="subTypeModal">
+  <div class="modal">
+    <div class="modal-title"><span class="mi mi-sm">sell</span> 種別の編集</div>
+    <p style="font-size:12px;color:var(--text3);margin:0 0 12px">「本・小説・漫画」や「ドラマ・映画」の中をさらに分けられます。ここで追加・削除できます。</p>
+    <div id="subTypeManager"></div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="closeSubTypeModal()" style="flex:1">閉じる</button>
+    </div>
+  </div>
+</div>
 
 <!-- 統計ドリルダウン一覧モーダル -->
 <div class="modal-overlay" id="statsListModal" style="z-index:250">
@@ -611,6 +661,26 @@ function saveItems() {
   scheduleGist();
 }
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ── サブ種別設定・優先度ヘルパー ──
+const SUBTYPE_KEY = 'subtypes-config';
+const DEFAULT_SUBTYPES = { book:['本','小説','漫画'], video:['ドラマ','映画','アニメ'], other:[] };
+function getSubTypes() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SUBTYPE_KEY));
+    if(s && typeof s === 'object') return { book:s.book||[], video:s.video||[], other:s.other||[] };
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_SUBTYPES));
+}
+function saveSubTypesCfg(cfg) { localStorage.setItem(SUBTYPE_KEY, JSON.stringify(cfg)); }
+const TYPE_SHORT = { book:'本', video:'映像', other:'その他' };
+function categoryLabel(it) { const st = (it.subType||'').trim(); return st || (TYPE_SHORT[it.type]||'その他'); }
+function priRank(it) { const p = it.priority; if(p==='hold') return -1; if(p==='high') return 3; if(p==='low') return 1; return 2; }
+function breakdownText(arr) {
+  const m = {};
+  arr.forEach(i => { const k = categoryLabel(i); m[k] = (m[k]||0) + 1; });
+  return Object.entries(m).sort((a,b) => b[1]-a[1]).map(([k,n]) => k+' '+n).join('・');
+}
 
 // ── Gist token/id ──
 function getGistToken() { return localStorage.getItem(GIST_TOKEN_KEY) || ''; }
@@ -858,7 +928,29 @@ function render() {
     list.innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">inbox</span></div><p>まだ登録がありません。<br>右下の＋ボタンから追加しましょう！</p></div>`;
     return;
   }
-  list.innerHTML = getSorted(filtered).map(it => cardHTML(it)).join('');
+  if(currentTabFilter === 'want') {
+    const holdItems = filtered.filter(i => i.priority === 'hold');
+    const active = filtered.filter(i => i.priority !== 'hold');
+    const ranked = getSorted(active);
+    ranked.sort((a, b) => priRank(b) - priRank(a));
+    let html = ranked.map(it => cardHTML(it)).join('');
+    if(holdItems.length) {
+      const holdSorted = getSorted(holdItems);
+      html += `<div class="hold-toggle" onclick="toggleHold()"><span class="mi mi-sm" id="holdChevron">expand_more</span> 今はいらない（${holdItems.length}）</div>`
+        + `<div id="holdList" style="display:none">${holdSorted.map(it => cardHTML(it)).join('')}</div>`;
+    }
+    list.innerHTML = html;
+  } else {
+    list.innerHTML = getSorted(filtered).map(it => cardHTML(it)).join('');
+  }
+}
+function toggleHold() {
+  const l = document.getElementById('holdList');
+  const c = document.getElementById('holdChevron');
+  if(!l) return;
+  const open = l.style.display !== 'none';
+  l.style.display = open ? 'none' : 'block';
+  if(c) c.textContent = open ? 'expand_more' : 'expand_less';
 }
 
 function renderStats() {
@@ -925,10 +1017,19 @@ function cardHTML(it) {
   const typeLabel = TYPE_LABEL[it.type]||'';
   const statusClass = STATUS_CLASS[it.status]||'badge-want';
   const statusIcon = STATUS_ICON[it.status]||'help_outline';
+  const subBadge = (it.subType||'').trim() ? `<span class="badge-sub">${esc(it.subType)}</span>` : '';
+  let priBadge = '';
+  if(it.status === 'want') {
+    if(it.priority === 'high')      priBadge = '<span class="badge-pri badge-pri-high"><span class="mi mi-sm">flag</span>高</span>';
+    else if(it.priority === 'low')  priBadge = '<span class="badge-pri badge-pri-low">低</span>';
+    else if(it.priority === 'hold') priBadge = '<span class="badge-pri badge-pri-hold">今はいらない</span>';
+  }
   // metaRowを2行に分ける：1行目=種類・ステータス・★、2行目=視聴場所・公開年・視聴日
   const metaRow1 = `<div class="card-meta">
     <span class="badge-type ${typeClass}"><span class="mi mi-sm">${typeIcon}</span> ${typeLabel}</span>
+    ${subBadge}
     <span class="badge-status ${statusClass}"><span class="mi mi-sm">${statusIcon}</span> ${getStatusLabel(it.status,it.type)}</span>
+    ${priBadge}
     ${starRow}
   </div>`;
   const rereadCount = it.rereadCount || 0;
@@ -1041,6 +1142,29 @@ function formatDate(dateObj) {
 // ─── モーダル ───
 let _starTemp = 0;
 let _rereadTemp = 0;
+let _priorityTemp = 'mid';
+
+function setPriority(p) { _priorityTemp = p; renderPriorityButtons(); }
+function renderPriorityButtons() {
+  document.querySelectorAll('#fPriorityGroup .pri-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.p === _priorityTemp);
+  });
+}
+function updatePriorityVisibility() {
+  const isWant = document.getElementById('fStatus').value === 'want';
+  document.getElementById('fPriorityGroup').style.display = isWant ? 'block' : 'none';
+}
+function updateSubTypeOptions() {
+  const type = document.getElementById('fType').value;
+  const list = getSubTypes()[type] || [];
+  const grp = document.getElementById('fSubTypeGroup');
+  const sel = document.getElementById('fSubType');
+  const cur = sel.value;
+  if(!list.length) { grp.style.display = 'none'; sel.innerHTML = '<option value="">未分類</option>'; return; }
+  grp.style.display = 'block';
+  sel.innerHTML = '<option value="">未分類</option>' + list.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  if([...sel.options].some(o => o.value === cur)) sel.value = cur;
+}
 function openAddModal() {
   editingId = null;
   _starTemp = 0;
@@ -1070,6 +1194,10 @@ function openAddModal() {
   document.getElementById('bookCandidates')._books = null;
   document.getElementById('bookCandidates')._videos = null;
   updateBookSearch();
+  _priorityTemp = 'mid';
+  renderPriorityButtons();
+  updatePriorityVisibility();
+  document.getElementById('fSubType').value = '';
   document.getElementById('editModal').classList.add('active');
   pushModalState();
   setTimeout(()=>document.getElementById('fTitle').focus(),100);
@@ -1099,6 +1227,18 @@ function openEdit(id) {
   _rereadTemp = it.rereadCount||1;
   document.getElementById('rereadDisplay').textContent = _rereadTemp;
   updateBookSearch();
+  _priorityTemp = it.priority || 'mid';
+  renderPriorityButtons();
+  updatePriorityVisibility();
+  {
+    const subSel = document.getElementById('fSubType');
+    const subVal = it.subType || '';
+    if(subVal && ![...subSel.options].some(o => o.value === subVal)) {
+      subSel.insertAdjacentHTML('beforeend', `<option value="${esc(subVal)}">${esc(subVal)}</option>`);
+      document.getElementById('fSubTypeGroup').style.display = 'block';
+    }
+    subSel.value = subVal;
+  }
   if(it.coverUrl){document.getElementById('coverPreviewWrap').style.display='block';document.getElementById('coverPreviewImg').src=it.coverUrl;}else{document.getElementById('coverPreviewWrap').style.display='none';}
   document.getElementById('editModal').classList.add('active');
   pushModalState();
@@ -1168,6 +1308,8 @@ function saveItem() {
       it.publisher = document.getElementById('fPublisher').value.trim();
       it.type = document.getElementById('fType').value;
       it.status = document.getElementById('fStatus').value;
+      it.subType = document.getElementById('fSubType').value;
+      it.priority = it.status === 'want' ? _priorityTemp : (it.priority || 'mid');
       it.star = _starTemp;
       it.rereadCount = _rereadTemp || 1;
       it.tags = tags;
@@ -1186,6 +1328,8 @@ function saveItem() {
       publisher: document.getElementById('fPublisher').value.trim(),
       type: document.getElementById('fType').value,
       status: document.getElementById('fStatus').value,
+      subType: document.getElementById('fSubType').value,
+      priority: document.getElementById('fStatus').value === 'want' ? _priorityTemp : 'mid',
       star: _starTemp,
       rereadCount: _rereadTemp || 1,
       tags,
@@ -1283,6 +1427,56 @@ function closeBackupModal() {
   document.getElementById('backupModal').classList.remove('active');
 }
 
+// ─── サブ種別の管理 ───
+function openSubTypeModal() {
+  renderSubTypeManager();
+  document.getElementById('subTypeModal').classList.add('active');
+  pushModalState();
+}
+function closeSubTypeModal() {
+  document.getElementById('subTypeModal').classList.remove('active');
+}
+function renderSubTypeManager() {
+  const cfg = getSubTypes();
+  const sections = [
+    { key:'book',  label:'本・小説・漫画', icon:'menu_book', ph:'エッセイ' },
+    { key:'video', label:'ドラマ・映画',   icon:'movie',     ph:'特撮' },
+    { key:'other', label:'その他',         icon:'category',  ph:'ゲーム' },
+  ];
+  document.getElementById('subTypeManager').innerHTML = sections.map(s => {
+    const chips = (cfg[s.key]||[]).map((name, i) =>
+      `<span class="sub-manage-chip">${esc(name)}<span class="mi mi-sm" onclick="removeSubType('${s.key}',${i})">close</span></span>`
+    ).join('');
+    return `<div style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:4px"><span class="mi mi-sm">${s.icon}</span> ${s.label}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${chips || '<span style="font-size:12px;color:var(--text3)">なし</span>'}</div>
+      <div style="display:flex;gap:6px">
+        <input class="form-input" id="subInput_${s.key}" placeholder="例: ${s.ph}" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addSubType('${s.key}')}">
+        <button class="btn-primary" onclick="addSubType('${s.key}')" style="padding:8px 14px;white-space:nowrap">追加</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function addSubType(type) {
+  const inp = document.getElementById('subInput_'+type);
+  const name = (inp.value||'').trim();
+  if(!name) return;
+  const cfg = getSubTypes();
+  if(!cfg[type]) cfg[type] = [];
+  if(cfg[type].includes(name)) { showToast('すでにあります','info'); return; }
+  cfg[type].push(name);
+  saveSubTypesCfg(cfg);
+  inp.value = '';
+  renderSubTypeManager();
+}
+function removeSubType(type, idx) {
+  const cfg = getSubTypes();
+  if(!cfg[type]) return;
+  cfg[type].splice(idx, 1);
+  saveSubTypesCfg(cfg);
+  renderSubTypeManager();
+}
+
 // ─── ナビ ───
 function showNav(page, el) {
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1353,6 +1547,27 @@ function renderStatsPage() {
     bd.style.cssText='color:var(--success);font-weight:700'; bd.textContent='記録 '+td+' ›';
     rr.appendChild(bw); rr.appendChild(document.createTextNode(' / ')); rr.appendChild(bd);
     row.appendChild(rr); c2.appendChild(row);
+    // サブ種別の内訳（未分類含む・タップで絞り込み）
+    const subs = getSubTypes()[t.key] || [];
+    const typeItems = items.filter(i => i.type === t.key);
+    if(subs.length || typeItems.some(i => (i.subType||'').trim())) {
+      const counts = {};
+      typeItems.forEach(i => { const k = (i.subType||'').trim(); counts[k] = (counts[k]||0) + 1; });
+      const chipWrap = document.createElement('div'); chipWrap.className = 'stats-sub-chips';
+      const ordered = [...subs];
+      Object.keys(counts).forEach(k => { if(k && !ordered.includes(k)) ordered.push(k); });
+      ordered.forEach(s => {
+        const n = counts[s] || 0; if(!n) return;
+        const b = mkBtn('subType', t.key+'\u241F'+s, t.label+'・'+s);
+        b.textContent = s+' '+n+' ›'; chipWrap.appendChild(b);
+      });
+      const un = counts[''] || 0;
+      if(un) {
+        const b = mkBtn('subType', t.key+'\u241F', t.label+'・未分類');
+        b.textContent = '未分類 '+un+' ›'; b.style.color = 'var(--text3)'; chipWrap.appendChild(b);
+      }
+      if(chipWrap.children.length) c2.appendChild(chipWrap);
+    }
   });
 
   // ── 3. 評価分布 ──
@@ -1410,6 +1625,9 @@ function renderStatsPage() {
       rr.innerHTML='<div class="stats-bar-track" style="width:80px"><div class="stats-bar-fill" style="width:'+p+'%"></div></div>';
       const val=document.createElement('span'); val.className='stats-row-val'; val.textContent=n;
       rr.appendChild(val); row.appendChild(rr); c4.appendChild(row);
+      const yb=document.createElement('div'); yb.className='stats-sub-line';
+      yb.textContent=breakdownText(doneItems.filter(i=>i.date.y===y));
+      if(yb.textContent) c4.appendChild(yb);
     });
     // 今年の月別
     const thisYear=new Date().getFullYear().toString();
@@ -1428,6 +1646,9 @@ function renderStatsPage() {
         rr.innerHTML='<div class="stats-bar-track" style="width:80px"><div class="stats-bar-fill" style="width:'+p+'%"></div></div>';
         const val=document.createElement('span'); val.className='stats-row-val'; val.textContent=n;
         rr.appendChild(val); row.appendChild(rr); c4.appendChild(row);
+        const mb=document.createElement('div'); mb.className='stats-sub-line';
+        mb.textContent=breakdownText(thisYearItems.filter(i=>i.date.m===m));
+        if(mb.textContent) c4.appendChild(mb);
       });
     }
   }
@@ -1484,6 +1705,12 @@ function showFilteredList(filterType, filterVal, label) {
   else if(filterType === 'venue')  filtered = items.filter(i=>i.venue===filterVal);
   else if(filterType === 'star')   filtered = items.filter(i=>i.star===Number(filterVal));
   else if(filterType === 'tag')    filtered = items.filter(i=>(i.tags||[]).includes(filterVal));
+  else if(filterType === 'subType') {
+    const idx = filterVal.indexOf('\u241F');
+    const type = filterVal.slice(0, idx);
+    const sub = filterVal.slice(idx + 1);
+    filtered = items.filter(i => i.type === type && (i.subType||'').trim() === sub);
+  }
 
   // リストページに遷移して結果を表示
   document.getElementById('pageStats').classList.remove('active');
@@ -1539,6 +1766,7 @@ function updateBookSearch() {
   // 作者ラベル変更
   const lEl = document.getElementById('authorLabel');
   if(lEl) lEl.textContent = isVideo ? '監督 / 制作' : '作者';
+  updateSubTypeOptions();
 }
 
 function onTitleInput() {
@@ -1909,6 +2137,10 @@ window.addEventListener('popstate', e => {
   if(backupModal?.classList.contains('active')) {
     closeBackupModal(); return;
   }
+  const subTypeModal = document.getElementById('subTypeModal');
+  if(subTypeModal?.classList.contains('active')) {
+    closeSubTypeModal(); return;
+  }
   if(sortSheet?.style.display === 'flex') {
     closeSortSheet(); return;
   }
@@ -2207,9 +2439,10 @@ function onTagKeydown(e) {
 
 // ─── 並び替え ───
 let _sortKey = 'date';
-let _sortDir = { registered:'desc', date:'desc', star:'desc', title:'asc' };
+let _sortDir = { registered:'desc', date:'desc', star:'desc', title:'asc', priority:'desc' };
 
 const SORT_OPTS = [
+  { key:'priority',   label:'優先度' },
   { key:'registered', label:'登録日' },
   { key:'date',       label:'読了・視聴日' },
   { key:'star',       label:'評価' },
@@ -2220,6 +2453,7 @@ const DIR_LABEL = {
   date:       { desc:'新しい順', asc:'古い順' },
   star:       { desc:'高い順',   asc:'低い順' },
   title:      { asc:'昇順',      desc:'降順' },
+  priority:   { desc:'高い順',   asc:'低い順' },
 };
 
 function openSortSheet() {
@@ -2264,6 +2498,9 @@ function getSorted(arr) {
     }
     if(_sortKey === 'title') {
       return dir==='asc' ? a.title.localeCompare(b.title,'ja') : b.title.localeCompare(a.title,'ja');
+    }
+    if(_sortKey === 'priority') {
+      return dir==='desc' ? priRank(b)-priRank(a) : priRank(a)-priRank(b);
     }
     return 0;
   });
