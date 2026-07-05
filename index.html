@@ -147,6 +147,9 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .sub-manage-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; padding: 6px 10px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 999px; color: var(--text2); }
 .sub-manage-chip .mi { cursor: pointer; color: var(--text3); }
 .stats-sub-line { font-size: 11px; color: var(--text3); margin: 2px 0 6px; padding-left: 2px; }
+.year-filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.year-chip { font-size: 12px; padding: 5px 12px; border-radius: 999px; background: var(--surface2); border: 1.5px solid var(--border); color: var(--text2); cursor: pointer; }
+.year-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 .stats-sub-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
 .stats-sub-chips .sfl-btn { font-size: 11px; padding: 3px 9px; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; color: var(--text2); }
 
@@ -388,7 +391,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
       <button class="filter-chip active" onclick="setFilter('all',this)"><span class="mi mi-sm">apps</span> すべて</button>
     </div>
     <div class="filter-bar-scroll">
-      <button class="filter-chip" onclick="setFilter('book',this)"><span class="mi mi-sm">menu_book</span> 本・小説・漫画</button>
+      <button class="filter-chip" onclick="setFilter('book',this)"><span class="mi mi-sm">menu_book</span> 小説・漫画</button>
       <button class="filter-chip" onclick="setFilter('video',this)"><span class="mi mi-sm">movie</span> ドラマ・映画</button>
       <button class="filter-chip" onclick="setFilter('other',this)"><span class="mi mi-sm">category</span> その他</button>
     </div>
@@ -447,7 +450,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
       <div class="form-group" style="flex:1">
         <label class="form-label">種類</label>
         <select class="form-select" id="fType" onchange="updateBookSearch()">
-          <option value="book">本・小説・漫画</option>
+          <option value="book">小説・漫画</option>
           <option value="video">ドラマ・映画</option>
           <option value="other">その他</option>
         </select>
@@ -574,7 +577,7 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 <div class="modal-overlay" id="subTypeModal">
   <div class="modal">
     <div class="modal-title"><span class="mi mi-sm">sell</span> 種別の編集</div>
-    <p style="font-size:12px;color:var(--text3);margin:0 0 12px">「本・小説・漫画」や「ドラマ・映画」の中をさらに分けられます。ここで追加・削除できます。</p>
+    <p style="font-size:12px;color:var(--text3);margin:0 0 12px">「小説・漫画」や「ドラマ・映画」の中をさらに分けられます。ここで追加・削除できます。</p>
     <div id="subTypeManager"></div>
     <div class="modal-actions">
       <button class="btn-primary" onclick="closeSubTypeModal()" style="flex:1">閉じる</button>
@@ -987,7 +990,7 @@ function renderStats() {
   `;
 }
 
-const TYPE_LABEL = { book:'本・小説・漫画', video:'ドラマ・映画', other:'その他' };
+const TYPE_LABEL = { book:'小説・漫画', video:'ドラマ・映画', other:'その他' };
 const TYPE_ICON  = { book:'menu_book', video:'movie', other:'category' };
 // 種類ごとのステータス表現
 const STATUS_WANT = { book:'読みたい', video:'観たい', other:'気になる' };
@@ -1490,7 +1493,7 @@ function closeSubTypeModal() {
 function renderSubTypeManager() {
   const cfg = getSubTypes();
   const sections = [
-    { key:'book',  label:'本・小説・漫画', icon:'menu_book', ph:'エッセイ' },
+    { key:'book',  label:'小説・漫画', icon:'menu_book', ph:'エッセイ' },
     { key:'video', label:'ドラマ・映画',   icon:'movie',     ph:'特撮' },
     { key:'other', label:'その他',         icon:'category',  ph:'ゲーム' },
   ];
@@ -1560,7 +1563,7 @@ function renderStatsPage() {
   const rated = items.filter(i=>i.star>0);
   const avg   = rated.length ? (rated.reduce((s,i)=>s+i.star,0)/rated.length).toFixed(1) : '-';
   const typeConf = [
-    {key:'book',  label:'本・小説・漫画', icon:'menu_book'},
+    {key:'book',  label:'小説・漫画', icon:'menu_book'},
     {key:'video', label:'ドラマ・映画',   icon:'movie'},
     {key:'other', label:'その他',         icon:'category'},
   ];
@@ -1676,9 +1679,14 @@ function renderStatsPage() {
       rr.innerHTML='<div class="stats-bar-track" style="width:80px"><div class="stats-bar-fill" style="width:'+p+'%"></div></div>';
       const val=document.createElement('span'); val.className='stats-row-val'; val.textContent=n;
       rr.appendChild(val); row.appendChild(rr); c4.appendChild(row);
-      const yb=document.createElement('div'); yb.className='stats-sub-line';
-      yb.textContent=breakdownText(doneItems.filter(i=>i.date.y===y));
-      if(yb.textContent) c4.appendChild(yb);
+      const yItems=doneItems.filter(i=>i.date.y===y);
+      const yCounts={}; yItems.forEach(i=>{ const k=categoryLabel(i); yCounts[k]=(yCounts[k]||0)+1; });
+      const yWrap=document.createElement('div'); yWrap.className='stats-sub-chips';
+      Object.entries(yCounts).sort((a,b)=>b[1]-a[1]).forEach(([cat,cn])=>{
+        const b=mkBtn('yearCat', y+'\u241F'+cat, y+'年・'+cat);
+        b.textContent=cat+' '+cn+' ›'; yWrap.appendChild(b);
+      });
+      if(yWrap.children.length) c4.appendChild(yWrap);
     });
     // 今年の月別
     const thisYear=new Date().getFullYear().toString();
@@ -1697,9 +1705,14 @@ function renderStatsPage() {
         rr.innerHTML='<div class="stats-bar-track" style="width:80px"><div class="stats-bar-fill" style="width:'+p+'%"></div></div>';
         const val=document.createElement('span'); val.className='stats-row-val'; val.textContent=n;
         rr.appendChild(val); row.appendChild(rr); c4.appendChild(row);
-        const mb=document.createElement('div'); mb.className='stats-sub-line';
-        mb.textContent=breakdownText(thisYearItems.filter(i=>i.date.m===m));
-        if(mb.textContent) c4.appendChild(mb);
+        const mItems=thisYearItems.filter(i=>i.date.m===m);
+        const mCounts={}; mItems.forEach(i=>{ const k=categoryLabel(i); mCounts[k]=(mCounts[k]||0)+1; });
+        const mWrap=document.createElement('div'); mWrap.className='stats-sub-chips';
+        Object.entries(mCounts).sort((a,b)=>b[1]-a[1]).forEach(([cat,cn])=>{
+          const b=mkBtn('monthCat', thisYear+'\u241F'+m+'\u241F'+cat, thisYear+'年'+m+'月・'+cat);
+          b.textContent=cat+' '+cn+' ›'; mWrap.appendChild(b);
+        });
+        if(mWrap.children.length) c4.appendChild(mWrap);
       });
     }
   }
@@ -1744,7 +1757,7 @@ document.addEventListener('click', e => {
   if(ft) showFilteredList(ft, fv||null, lb||'');
 });
 
-function showFilteredList(filterType, filterVal, label) {
+function showFilteredList(filterType, filterVal, label, subYear) {
   let filtered = [];
   if(filterType === 'all')         filtered = [...items];
   else if(filterType === 'status') filtered = items.filter(i=>i.status===filterVal);
@@ -1762,6 +1775,28 @@ function showFilteredList(filterType, filterVal, label) {
     const sub = filterVal.slice(idx + 1);
     filtered = items.filter(i => i.type === type && (i.subType||'').trim() === sub);
   }
+  else if(filterType === 'yearCat') {
+    const idx = filterVal.indexOf('\u241F');
+    const y = filterVal.slice(0, idx);
+    const cat = filterVal.slice(idx + 1);
+    filtered = items.filter(i => i.status === 'done' && i.date?.y === y && categoryLabel(i) === cat);
+  }
+  else if(filterType === 'monthCat') {
+    const parts = filterVal.split('\u241F');
+    filtered = items.filter(i => i.status === 'done' && i.date?.y === parts[0] && i.date?.m === parts[1] && categoryLabel(i) === parts[2]);
+  }
+
+  // カテゴリ系の絞り込みには「年で絞る」チップを付ける
+  const yearFilterable = ['subType', 'type', 'typeStatus'].includes(filterType);
+  let yearChipsHTML = '';
+  if(yearFilterable) {
+    const years = [...new Set(filtered.filter(i => i.date?.y).map(i => i.date.y))].sort((a,b) => b - a);
+    if(years.length) {
+      const chip = (yv, txt) => `<span class="year-chip${(subYear||'')===yv?' active':''}" data-yc="${yv}">${txt}</span>`;
+      yearChipsHTML = '<div class="year-filter-bar">' + chip('', 'すべて') + years.map(y => chip(y, y+'年')).join('') + '</div>';
+    }
+  }
+  if(subYear) filtered = filtered.filter(i => i.date?.y === subYear);
 
   // リストページに遷移して結果を表示
   document.getElementById('pageStats').classList.remove('active');
@@ -1786,10 +1821,13 @@ function showFilteredList(filterType, filterVal, label) {
   renderStats();
   const list = document.getElementById('cardList');
   if(!filtered.length) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">inbox</span></div><p>該当する作品がありません</p></div>';
+    list.innerHTML = yearChipsHTML + '<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">inbox</span></div><p>該当する作品がありません</p></div>';
   } else {
-    list.innerHTML = getSorted(filtered).map(it => cardHTML(it)).join('');
+    list.innerHTML = yearChipsHTML + getSorted(filtered).map(it => cardHTML(it)).join('');
   }
+  list.querySelectorAll('.year-chip').forEach(ch => {
+    ch.onclick = () => showFilteredList(filterType, filterVal, label, ch.dataset.yc || null);
+  });
 }
 function closeStatsListModal() {
   document.getElementById('statsListModal').classList.remove('active');
