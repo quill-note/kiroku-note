@@ -150,6 +150,12 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .year-filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
 .year-chip { font-size: 12px; padding: 5px 12px; border-radius: 999px; background: var(--surface2); border: 1.5px solid var(--border); color: var(--text2); cursor: pointer; }
 .year-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+#searchFilters { margin-top: 10px; }
+.search-filter-group { margin-bottom: 8px; }
+.search-filter-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; font-weight: 600; }
+.search-filter-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.search-chip { font-size: 12px; padding: 4px 11px; border-radius: 999px; background: var(--surface2); border: 1.5px solid var(--border); color: var(--text2); cursor: pointer; }
+.search-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 .stats-sub-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }
 .stats-sub-chips .sfl-btn { font-size: 11px; padding: 3px 9px; background: var(--surface2); border: 1px solid var(--border); border-radius: 999px; color: var(--text2); }
 
@@ -385,6 +391,10 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
       <input id="searchInput" class="form-input" placeholder="タイトル・作者・メモ・タグで検索" style="padding-left:34px;padding-right:34px" oninput="onSearchInput()">
       <button onclick="closeSearch()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;padding:2px"><span class="mi mi-sm">close</span></button>
     </div>
+    <div id="searchFilterToggle" onclick="toggleSearchFilters()" style="margin-top:8px;display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--text2);cursor:pointer;padding:4px 2px">
+      <span class="mi mi-sm" id="searchFilterChevron">expand_more</span> 絞り込み<span id="searchFilterCount" style="color:var(--primary);font-weight:700"></span>
+    </div>
+    <div id="searchFilters" style="display:none"></div>
   </div>
   <div class="filter-bar" id="filterBar">
     <div class="filter-bar-fixed">
@@ -1451,6 +1461,7 @@ function toggleSearch() {
     closeSearch();
   } else {
     wrap.style.display = 'block';
+    renderSearchFilters();
     document.getElementById('searchBtn').querySelector('.mi').textContent = 'close';
     setTimeout(() => document.getElementById('searchInput').focus(), 100);
   }
@@ -1459,7 +1470,57 @@ function closeSearch() {
   document.getElementById('searchBarWrap').style.display = 'none';
   document.getElementById('searchBtn').querySelector('.mi').textContent = 'search';
   document.getElementById('searchInput').value = '';
+  _searchFilters = { subType:null, year:null, status:null };
+  _searchFiltersOpen = false;
+  const panel = document.getElementById('searchFilters');
+  if(panel) panel.style.display = 'none';
+  const chev = document.getElementById('searchFilterChevron');
+  if(chev) chev.textContent = 'expand_more';
   render();
+}
+let _searchFilters = { subType:null, year:null, status:null };
+let _searchFiltersOpen = false;
+function toggleSearchFilters() {
+  _searchFiltersOpen = !_searchFiltersOpen;
+  const panel = document.getElementById('searchFilters');
+  const chev = document.getElementById('searchFilterChevron');
+  panel.style.display = _searchFiltersOpen ? 'block' : 'none';
+  if(chev) chev.textContent = _searchFiltersOpen ? 'expand_less' : 'expand_more';
+}
+function setSearchFilter(axis, value) {
+  _searchFilters[axis] = (_searchFilters[axis] === value) ? null : value;
+  renderSearchFilters();
+  onSearchInput();
+}
+function renderSearchFilters() {
+  const el = document.getElementById('searchFilters');
+  if(!el) return;
+  // 種別（全種類のサブ種別＋未分類）
+  const cfg = getSubTypes();
+  const subs = [...new Set([...(cfg.book||[]), ...(cfg.video||[]), ...(cfg.other||[])])];
+  // 年（日付を持つ作品から）
+  const years = [...new Set(items.filter(i=>i.date?.y).map(i=>i.date.y))].sort((a,b)=>b-a);
+  const chip = (axis, val, txt) => `<span class="search-chip${_searchFilters[axis]===val?' active':''}" onclick="setSearchFilter('${axis}','${val}')">${txt}</span>`;
+  let html = '';
+  if(subs.length) {
+    html += '<div class="search-filter-group"><div class="search-filter-label">種別</div><div class="search-filter-chips">'
+      + subs.map(s=>chip('subType', esc(s).replace(/'/g,"\\'"), esc(s))).join('')
+      + chip('subType','__none__','未分類')
+      + '</div></div>';
+  }
+  if(years.length) {
+    html += '<div class="search-filter-group"><div class="search-filter-label">年</div><div class="search-filter-chips">'
+      + years.map(y=>chip('year', y, y+'年')).join('')
+      + '</div></div>';
+  }
+  html += '<div class="search-filter-group"><div class="search-filter-label">ステータス</div><div class="search-filter-chips">'
+    + chip('status','want','気になる') + chip('status','done','記録')
+    + '</div></div>';
+  el.innerHTML = html;
+  // 選択中の条件数を「絞り込み」の横に表示
+  const active = [_searchFilters.subType, _searchFilters.year, _searchFilters.status].filter(v => v !== null).length;
+  const cnt = document.getElementById('searchFilterCount');
+  if(cnt) cnt.textContent = active ? `（${active}）` : '';
 }
 function onSearchInput() {
   const kw = document.getElementById('searchInput').value.trim().toLowerCase();
@@ -1470,19 +1531,29 @@ function onSearchInput() {
   document.querySelector('.tabs').style.display = 'flex';
   document.getElementById('statsBar').style.display = 'flex';
   const list = document.getElementById('cardList');
-  if(!kw) { render(); return; }
-  const filtered = items.filter(it =>
+  const f = _searchFilters;
+  const hasFilter = kw || f.subType !== null || f.year !== null || f.status !== null;
+  if(!hasFilter) { render(); return; }
+  let filtered = items;
+  if(kw) filtered = filtered.filter(it =>
     it.title.toLowerCase().includes(kw) ||
     (it.author||'').toLowerCase().includes(kw) ||
     (it.memo||'').toLowerCase().includes(kw) ||
     (it.tags||[]).some(t=>t.toLowerCase().includes(kw))
   );
+  if(f.subType !== null) {
+    if(f.subType === '__none__') filtered = filtered.filter(it => !(it.subType||'').trim());
+    else filtered = filtered.filter(it => (it.subType||'').trim() === f.subType);
+  }
+  if(f.year !== null)   filtered = filtered.filter(it => it.date?.y === f.year);
+  if(f.status !== null) filtered = filtered.filter(it => it.status === f.status);
   renderStats();
+  document.getElementById('statsBar').innerHTML = `<div style="width:100%;text-align:right;font-size:12px;color:var(--text3)">${filtered.length}件</div>`;
   if(!filtered.length) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">search_off</span></div><p>「${esc(kw)}」に一致する作品が<br>見つかりませんでした。</p></div>`;
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">search_off</span></div><p>条件に一致する作品が<br>見つかりませんでした。</p></div>`;
     return;
   }
-  list.innerHTML = filtered.map(it=>cardHTML(it)).join('');
+  list.innerHTML = getSorted(filtered).map(it=>cardHTML(it)).join('');
 }
 
 function openBackupModal() {
