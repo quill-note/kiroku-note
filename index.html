@@ -330,7 +330,6 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .svc-btn { padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text3); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; display:inline-flex; align-items:center; gap:3px; }
 .svc-btn.active { background: #fbe9ee; border-color: var(--secondary); color: #b85a70; }
 .svc-other-row { display:none; gap:6px; margin-top:8px; }
-.badge-svc { font-size: 11px; padding: 2px 8px; border-radius: 8px; background: #fbe9ee; color: #b85a70; display:inline-flex; align-items:center; gap:3px; }
 .badge-venue { font-size: 11px; padding: 2px 8px; border-radius: 8px; background: #e8f0fd; color: #3b6dbf; display:inline-flex; align-items:center; gap:3px; }
 
 /* 統計ページ */
@@ -1106,7 +1105,7 @@ function cardHTML(it) {
   const dateEl = dateStr ? `<span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:2px"><span class="mi mi-sm">event</span>${esc(dateStr)}</span>` : '';
   const venueMap = {cinema:'映画館',tv:'テレビ',streaming:'配信'};
   const venueIconMap = {cinema:'movie',tv:'tv',streaming:'wifi'};
-  const venueEl = it.venue && venueMap[it.venue] ? `<span class="badge-venue"><span class="mi mi-sm">${venueIconMap[it.venue]}</span>${venueMap[it.venue]}</span>` + (it.venue==='streaming' ? getServices(it).map(sv=>`<span class="badge-svc">${esc(sv)}</span>`).join('') : '') : '';
+  const venueEl = it.venue && venueMap[it.venue] ? `<span class="badge-venue"><span class="mi mi-sm">${venueIconMap[it.venue]}</span>${venueMap[it.venue]}${it.venue==='streaming'&&getServices(it).length?'：'+getServices(it).map(esc).join(' '):''}</span>` : '';
   // 放送開始・公開年ラベル（映像作品のみ）
   const releaseLabel = it.type==='video' ? '放送・公開 ' : '';
   const releaseEl = it.releaseYear ? `<span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:2px"><span class="mi mi-sm">calendar_today</span>${releaseLabel}${esc(it.releaseYear)}</span>` : '';
