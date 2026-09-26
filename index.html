@@ -974,13 +974,39 @@ function setTab(tab, el) {
 }
 
 // ─── レンダリング ───
+// 検索パネルの条件（キーワード・種別・年・ステータス）
+function getSearchCond() {
+  const open = document.getElementById('searchBarWrap')?.style.display !== 'none';
+  const v = id => (open && document.getElementById(id)?.value) || '';
+  const c = { kw: v('searchInput').trim().toLowerCase(), sub: v('sfSubType'), year: v('sfYear'), status: v('sfStatus') };
+  c.active = !!(c.kw || c.sub || c.year || c.status);
+  return c;
+}
+function matchSearch(it, c) {
+  if(c.kw && !(
+    it.title.toLowerCase().includes(c.kw) ||
+    (it.author||'').toLowerCase().includes(c.kw) ||
+    (it.memo||'').toLowerCase().includes(c.kw) ||
+    getServices(it).some(sv=>sv.toLowerCase().includes(c.kw)) ||
+    (it.tags||[]).some(t=>t.toLowerCase().includes(c.kw))
+  )) return false;
+  if(c.sub === '__none__' && (it.subType||'').trim()) return false;
+  if(c.sub && c.sub !== '__none__' && (it.subType||'').trim() !== c.sub) return false;
+  if(c.year && it.date?.y !== c.year) return false;
+  if(c.status && it.status !== c.status) return false;
+  return true;
+}
+// カテゴリチップ＋検索条件で絞った範囲（タブ適用前）
+function getScope() {
+  const c = getSearchCond();
+  return items.filter(it =>
+    (currentTypeFilter === 'all' || it.type === currentTypeFilter) && matchSearch(it, c));
+}
 function getFiltered() {
-  return items.filter(it => {
-    const typeOk = currentTypeFilter === 'all' || it.type === currentTypeFilter;
-    let statusOk = true;
-    if(currentTabFilter === 'want') statusOk = it.status === 'want';
-    else if(currentTabFilter === 'done') statusOk = it.status === 'done';
-    return typeOk && statusOk;
+  return getScope().filter(it => {
+    if(currentTabFilter === 'want') return it.status === 'want';
+    if(currentTabFilter === 'done') return it.status === 'done';
+    return true;
   });
 }
 
@@ -990,7 +1016,9 @@ function render() {
   const list = document.getElementById('cardList');
   const filtered = getFiltered();
   if(!filtered.length) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">inbox</span></div><p>まだ登録がありません。<br>右下の＋ボタンから追加しましょう！</p></div>`;
+    list.innerHTML = getSearchCond().active
+      ? `<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">search_off</span></div><p>条件に一致する作品が<br>見つかりませんでした。</p></div>`
+      : `<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">inbox</span></div><p>まだ登録がありません。<br>右下の＋ボタンから追加しましょう！</p></div>`;
     return;
   }
   if(currentTabFilter === 'want') {
@@ -1020,7 +1048,7 @@ function toggleHold() {
 
 function renderStats() {
   // 上のカテゴリチップ（すべて／小説・漫画／ドラマ・映画／その他）で絞った範囲の件数を出す
-  const scope = currentTypeFilter === 'all' ? items : items.filter(i=>i.type===currentTypeFilter);
+  const scope = getScope();
   const total = scope.length;
   const want = scope.filter(i=>i.status==='want').length;
   const done = scope.filter(i=>i.status==='done').length;
@@ -1036,6 +1064,7 @@ function renderStats() {
     <div class="stat-item${cur('done')}"><span class="stat-label">記録</span><span class="stat-num" style="color:var(--success)">${done}</span></div>
     <span style="color:var(--border);margin:0 6px">·</span>
     <div class="stat-item"><span class="stat-label">平均★</span><span class="stat-num" style="color:#f0b429">${avg}</span></div>
+    ${getSearchCond().active ? '<span class="stat-label" style="margin-left:auto;display:inline-flex;align-items:center;gap:2px"><span class="mi mi-sm">filter_alt</span>絞り込み中</span>' : ''}
   `;
 }
 
@@ -1534,33 +1563,9 @@ function onSearchInput() {
   document.getElementById('pageList').classList.add('active');
   document.querySelector('.tabs').style.display = 'flex';
   document.getElementById('statsBar').style.display = 'flex';
-  const list = document.getElementById('cardList');
-  const fSub = document.getElementById('sfSubType')?.value || '';
-  const fYear = document.getElementById('sfYear')?.value || '';
-  const fStatus = document.getElementById('sfStatus')?.value || '';
-  const hasFilter = kw || fSub || fYear || fStatus;
-  if(!hasFilter) { render(); return; }
-  let filtered = items;
-  if(kw) filtered = filtered.filter(it =>
-    it.title.toLowerCase().includes(kw) ||
-    (it.author||'').toLowerCase().includes(kw) ||
-    (it.memo||'').toLowerCase().includes(kw) ||
-    getServices(it).some(sv=>sv.toLowerCase().includes(kw)) ||
-    (it.tags||[]).some(t=>t.toLowerCase().includes(kw))
-  );
-  if(fSub) {
-    if(fSub === '__none__') filtered = filtered.filter(it => !(it.subType||'').trim());
-    else filtered = filtered.filter(it => (it.subType||'').trim() === fSub);
-  }
-  if(fYear)   filtered = filtered.filter(it => it.date?.y === fYear);
-  if(fStatus) filtered = filtered.filter(it => it.status === fStatus);
-  renderStats();
-  document.getElementById('statsBar').innerHTML = `<div style="width:100%;text-align:right;font-size:12px;color:var(--text3)">${filtered.length}件</div>`;
-  if(!filtered.length) {
-    list.innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="mi" style="font-size:48px;color:var(--border)">search_off</span></div><p>条件に一致する作品が<br>見つかりませんでした。</p></div>`;
-    return;
-  }
-  list.innerHTML = getSorted(filtered).map(it=>cardHTML(it)).join('');
+  // ランキング表示中だったら記録タブに切り替え
+  if(currentTabFilter === 'rank') { setTab('done'); return; }
+  render();
 }
 
 function openBackupModal() {
