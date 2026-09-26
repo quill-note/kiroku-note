@@ -2284,6 +2284,44 @@ async function searchVideos(q) {
   }
 }
 
+// ─── シーズン選択 ───
+function showSeasonPicker(r, seasons) {
+  const candEl = document.getElementById('bookCandidates');
+  candEl._seasonBase = r;
+  candEl._seasons = seasons;
+  const rows = seasons.map((se, i) => {
+    const y = se.air_date ? se.air_date.slice(0,4) : '';
+    const thumb = se.poster_path ? `https://image.tmdb.org/t/p/w200${se.poster_path}` : r.thumb;
+    const thumbHTML = thumb
+      ? `<img class="book-cand-thumb" src="${thumb}" alt="" onerror="this.style.display='none'">`
+      : `<div class="book-cand-thumb-empty"><span class="mi mi-sm">tv</span></div>`;
+    return `<div class="book-candidate" onclick="selectSeason(${i})">
+      ${thumbHTML}
+      <div class="book-cand-info">
+        <div class="book-cand-title">シーズン${se.season_number}</div>
+        <div class="book-cand-author">${y ? y + '年' : '放送日未定'}${se.episode_count ? ' · 全' + se.episode_count + '話' : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  candEl.innerHTML = `<div style="padding:8px 10px;font-size:12px;font-weight:700;color:var(--text2)">${esc(r.title)} — どのシーズン？</div>`
+    + rows
+    + `<div class="book-candidate" onclick="document.getElementById('bookCandidates').style.display='none'" style="justify-content:center;color:var(--text3);font-size:12px">シリーズ全体として登録</div>`;
+  candEl.style.display = 'block';
+}
+function selectSeason(i) {
+  const candEl = document.getElementById('bookCandidates');
+  const r = candEl._seasonBase, se = (candEl._seasons||[])[i];
+  if(!r || !se) return;
+  document.getElementById('fTitle').value = `${r.title} シーズン${se.season_number}`;
+  if(se.air_date) document.getElementById('fReleaseYear').value = se.air_date.slice(0,4) + '年';
+  if(se.poster_path) {
+    _selectedCoverUrl = `https://image.tmdb.org/t/p/w200${se.poster_path}`;
+    document.getElementById('coverPreviewWrap').style.display = 'block';
+    document.getElementById('coverPreviewImg').src = _selectedCoverUrl;
+  }
+  candEl.style.display = 'none';
+}
+
 async function selectVideo(i) {
   const candEl = document.getElementById('bookCandidates');
   const results = candEl._videos || [];
@@ -2315,6 +2353,9 @@ async function selectVideo(i) {
           const data = await res.json();
           const creators = (data.created_by||[]).map(p=>p.name).join(', ');
           if(creators) document.getElementById('fAuthor').value = creators;
+          // シーズンが複数あるドラマはシーズンを選べるように
+          const seasons = (data.seasons||[]).filter(se => se.season_number > 0);
+          if(seasons.length > 1) showSeasonPicker(r, seasons);
         }
       } catch(e) {}
     }
