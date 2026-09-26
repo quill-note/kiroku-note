@@ -327,8 +327,10 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .venue-group { display: flex; gap: 6px; flex-wrap: wrap; }
 .venue-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
 .venue-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
-.svc-btn { padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 12px; font-weight: 600; cursor: pointer; }
-.svc-btn.active { background: #3b6dbf; border-color: #3b6dbf; color: white; }
+.svc-btn { padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text3); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; display:inline-flex; align-items:center; gap:3px; }
+.svc-btn.active { background: #fbe9ee; border-color: var(--secondary); color: #b85a70; }
+.svc-other-row { display:none; gap:6px; margin-top:8px; }
+.badge-svc { font-size: 11px; padding: 2px 8px; border-radius: 8px; background: #fbe9ee; color: #b85a70; display:inline-flex; align-items:center; gap:3px; }
 .badge-venue { font-size: 11px; padding: 2px 8px; border-radius: 8px; background: #e8f0fd; color: #3b6dbf; display:inline-flex; align-items:center; gap:3px; }
 
 /* 統計ページ */
@@ -578,9 +580,12 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
         <button type="button" class="venue-btn" onclick="setVenue('')"><span class="mi mi-sm">remove_circle_outline</span> なし</button>
       </div>
       <div id="serviceGroup" style="display:none;margin-top:10px">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">配信サービス</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px">配信サービス（複数選べます）</div>
         <div class="venue-group" id="serviceChips"></div>
-        <input class="form-input" id="fServiceOther" placeholder="サービス名を入力" style="display:none;margin-top:8px">
+        <div class="svc-other-row" id="svcOtherRow">
+          <input class="form-input" id="fServiceOther" placeholder="サービス名を入力" style="flex:1">
+          <button type="button" class="svc-btn active" id="svcOtherAdd" style="flex-shrink:0">追加</button>
+        </div>
       </div>
     </div>
     <div class="form-group" id="releaseYearGroup" style="display:none">
@@ -1072,7 +1077,7 @@ function cardHTML(it) {
   const dateEl = dateStr ? `<span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:2px"><span class="mi mi-sm">event</span>${esc(dateStr)}</span>` : '';
   const venueMap = {cinema:'映画館',tv:'テレビ',streaming:'配信'};
   const venueIconMap = {cinema:'movie',tv:'tv',streaming:'wifi'};
-  const venueEl = it.venue && venueMap[it.venue] ? `<span class="badge-venue"><span class="mi mi-sm">${venueIconMap[it.venue]}</span>${venueMap[it.venue]}${it.venue==='streaming'&&it.service?' · '+esc(it.service):''}</span>` : '';
+  const venueEl = it.venue && venueMap[it.venue] ? `<span class="badge-venue"><span class="mi mi-sm">${venueIconMap[it.venue]}</span>${venueMap[it.venue]}</span>` + (it.venue==='streaming' ? getServices(it).map(sv=>`<span class="badge-svc">${esc(sv)}</span>`).join('') : '') : '';
   // 放送開始・公開年ラベル（映像作品のみ）
   const releaseLabel = it.type==='video' ? '放送・公開 ' : '';
   const releaseEl = it.releaseYear ? `<span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:2px"><span class="mi mi-sm">calendar_today</span>${releaseLabel}${esc(it.releaseYear)}</span>` : '';
@@ -1285,7 +1290,7 @@ function openAddModal() {
   _selectedCoverUrl = '';
   _selectedVenue = '';
   document.querySelectorAll('.venue-btn').forEach(b=>b.classList.remove('active'));
-  setServiceForm('');
+  setServiceForm([]);
   document.getElementById('fReleaseYear').value = '';
   initDateSelects();
   setDateSelects(null);
@@ -1326,7 +1331,7 @@ function openEdit(id) {
   _selectedCoverUrl = it.coverUrl||'';
   _selectedVenue = it.venue||'';
   document.querySelectorAll('.venue-btn').forEach(b=>{const bv=b.getAttribute('onclick').match(/'([^']*)'/)?.[1]||'';b.classList.toggle('active',bv===_selectedVenue&&_selectedVenue!=='');});
-  setServiceForm(it.service||'');
+  setServiceForm(getServices(it));
   document.getElementById('fReleaseYear').value = it.releaseYear||'';
   initDateSelects();
   setDateSelects(it.date||null);
@@ -1417,7 +1422,8 @@ function saveItem() {
       it.date = getDateFromSelects();
       it.coverUrl = _selectedCoverUrl || it.coverUrl || '';
       it.venue = _selectedVenue || '';
-      it.service = getServiceFromForm();
+      it.services = getServiceFromForm();
+      delete it.service;
       it.releaseYear = document.getElementById('fReleaseYear').value.trim();
       it.updatedAt = Date.now();
     }
@@ -1438,7 +1444,7 @@ function saveItem() {
       date: getDateFromSelects(),
       coverUrl: _selectedCoverUrl || '',
       venue: _selectedVenue || '',
-      service: getServiceFromForm(),
+      services: getServiceFromForm(),
       releaseYear: document.getElementById('fReleaseYear').value.trim(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -1539,7 +1545,7 @@ function onSearchInput() {
     it.title.toLowerCase().includes(kw) ||
     (it.author||'').toLowerCase().includes(kw) ||
     (it.memo||'').toLowerCase().includes(kw) ||
-    (it.service||'').toLowerCase().includes(kw) ||
+    getServices(it).some(sv=>sv.toLowerCase().includes(kw)) ||
     (it.tags||[]).some(t=>t.toLowerCase().includes(kw))
   );
   if(fSub) {
@@ -2160,45 +2166,62 @@ function setVenue(v) {
   document.getElementById('serviceGroup').style.display = v === 'streaming' ? 'block' : 'none';
 }
 
-// ─── 配信サービス ───
+// ─── 配信サービス（複数選択） ───
 const STREAMING_SERVICES = ['Netflix','Prime Video','Hulu','U-NEXT','Disney+','ABEMA','TVer','Lemino','FOD','DMM TV','dアニメストア'];
-let _selectedService = '';
-function renderServiceChips() {
-  const known = STREAMING_SERVICES.includes(_selectedService);
-  const isOther = _selectedService !== '' && !known;
-  const chips = STREAMING_SERVICES.map(s =>
-    `<button type="button" class="svc-btn${_selectedService===s?' active':''}" data-svc="${s}">${s}</button>`
-  ).join('') + `<button type="button" class="svc-btn${isOther||_serviceOtherMode?' active':''}" data-svc="__other__">その他</button>`;
-  const el = document.getElementById('serviceChips');
-  el.innerHTML = chips;
-  el.querySelectorAll('.svc-btn').forEach(b => b.onclick = () => selectService(b.dataset.svc));
-  const inp = document.getElementById('fServiceOther');
-  inp.style.display = (isOther || _serviceOtherMode) ? 'block' : 'none';
-  if(isOther) inp.value = _selectedService;
+let _selectedServices = [];
+// 旧データ（service: 文字列）にも対応
+function getServices(it) {
+  if(Array.isArray(it.services)) return it.services;
+  return it.service ? [it.service] : [];
 }
-let _serviceOtherMode = false;
-function selectService(s) {
+function renderServiceChips() {
+  const custom = _selectedServices.filter(s => !STREAMING_SERVICES.includes(s));
+  const all = [...STREAMING_SERVICES, ...custom];
+  const el = document.getElementById('serviceChips');
+  el.innerHTML = all.map(s =>
+    `<button type="button" class="svc-btn${_selectedServices.includes(s)?' active':''}" data-svc="${esc(s)}">${_selectedServices.includes(s)?'<span class="mi mi-sm">check</span>':''}${esc(s)}</button>`
+  ).join('') + `<button type="button" class="svc-btn" data-svc="__other__"><span class="mi mi-sm">add</span>その他</button>`;
+  el.querySelectorAll('.svc-btn').forEach(b => b.onclick = () => toggleService(b.dataset.svc));
+}
+function toggleService(s) {
   if(s === '__other__') {
-    _serviceOtherMode = !_serviceOtherMode || STREAMING_SERVICES.includes(_selectedService);
-    _selectedService = '';
-    document.getElementById('fServiceOther').value = '';
-  } else {
-    _serviceOtherMode = false;
-    _selectedService = (_selectedService === s) ? '' : s; // もう一度押すと解除
+    const row = document.getElementById('svcOtherRow');
+    row.style.display = row.style.display === 'flex' ? 'none' : 'flex';
+    if(row.style.display === 'flex') document.getElementById('fServiceOther').focus();
+    return;
   }
+  const i = _selectedServices.indexOf(s);
+  if(i >= 0) _selectedServices.splice(i, 1); else _selectedServices.push(s);
   renderServiceChips();
 }
-function setServiceForm(v) {
-  _selectedService = v || '';
-  _serviceOtherMode = false;
+function addOtherService() {
+  const inp = document.getElementById('fServiceOther');
+  const v = inp.value.trim();
+  if(v && !_selectedServices.includes(v)) _selectedServices.push(v);
+  inp.value = '';
+  document.getElementById('svcOtherRow').style.display = 'none';
+  renderServiceChips();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('svcOtherAdd').onclick = addOtherService;
+  document.getElementById('fServiceOther').addEventListener('keydown', e => {
+    if(e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addOtherService(); }
+  });
+});
+function setServiceForm(list) {
+  _selectedServices = [...(list || [])];
   document.getElementById('fServiceOther').value = '';
+  document.getElementById('svcOtherRow').style.display = 'none';
   renderServiceChips();
   document.getElementById('serviceGroup').style.display = _selectedVenue === 'streaming' ? 'block' : 'none';
 }
 function getServiceFromForm() {
-  if(_selectedVenue !== 'streaming') return '';
-  if(_serviceOtherMode) return document.getElementById('fServiceOther').value.trim();
-  return _selectedService;
+  if(_selectedVenue !== 'streaming') return [];
+  // 入力欄に書きかけのものがあれば含める
+  const pending = document.getElementById('fServiceOther').value.trim();
+  const list = [..._selectedServices];
+  if(pending && !list.includes(pending)) list.push(pending);
+  return list;
 }
 
 async function searchVideos(q) {
