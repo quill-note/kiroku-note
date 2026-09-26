@@ -82,6 +82,8 @@ body { font-family: 'Hiragino Sans', 'Meiryo', sans-serif; background: var(--bg)
 .stat-item { flex-shrink: 0; display: flex; align-items: center; gap: 4px; }
 .stat-num { font-size: 13px; font-weight: 700; color: var(--primary); }
 .stat-label { font-size: 11px; color: var(--text3); }
+.stat-item.current { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 1px 8px; }
+.stat-item.current .stat-label { color: var(--text2); font-weight: 700; }
 
 /* カードリスト */
 .list { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
@@ -950,6 +952,7 @@ function setTab(tab, el) {
   if(tab === 'rank') {
     document.getElementById('pageList').classList.remove('active');
     document.getElementById('pageRank').classList.add('active');
+    renderStats();
     renderRank();
   } else {
     document.getElementById('pageRank').classList.remove('active');
@@ -1004,17 +1007,21 @@ function toggleHold() {
 }
 
 function renderStats() {
-  const total = items.length;
-  const want = items.filter(i=>i.status==='want').length;
-  const done = items.filter(i=>i.status==='done').length;
-  const rated = items.filter(i=>i.star>0);
+  // 上のカテゴリチップ（すべて／小説・漫画／ドラマ・映画／その他）で絞った範囲の件数を出す
+  const scope = currentTypeFilter === 'all' ? items : items.filter(i=>i.type===currentTypeFilter);
+  const total = scope.length;
+  const want = scope.filter(i=>i.status==='want').length;
+  const done = scope.filter(i=>i.status==='done').length;
+  const rated = scope.filter(i=>i.star>0);
   const avg = rated.length ? (rated.reduce((s,i)=>s+i.star,0)/rated.length).toFixed(1) : '-';
+  // いま開いているタブに対応する数字を強調（＝リストに表示されている件数）
+  const cur = k => (currentTabFilter === k ? ' current' : '');
   document.getElementById('statsBar').innerHTML = `
-    <div class="stat-item"><span class="stat-label">合計</span><span class="stat-num">${total}</span></div>
+    <div class="stat-item${cur('all2')}"><span class="stat-label">合計</span><span class="stat-num">${total}</span></div>
     <span style="color:var(--border);margin:0 6px">·</span>
-    <div class="stat-item"><span class="stat-label">気になる</span><span class="stat-num" style="color:var(--primary-dark)">${want}</span></div>
+    <div class="stat-item${cur('want')}"><span class="stat-label">気になる</span><span class="stat-num" style="color:var(--primary-dark)">${want}</span></div>
     <span style="color:var(--border);margin:0 6px">·</span>
-    <div class="stat-item"><span class="stat-label">記録</span><span class="stat-num" style="color:var(--success)">${done}</span></div>
+    <div class="stat-item${cur('done')}"><span class="stat-label">記録</span><span class="stat-num" style="color:var(--success)">${done}</span></div>
     <span style="color:var(--border);margin:0 6px">·</span>
     <div class="stat-item"><span class="stat-label">平均★</span><span class="stat-num" style="color:#f0b429">${avg}</span></div>
   `;
