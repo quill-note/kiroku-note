@@ -2238,9 +2238,20 @@ async function searchVideos(q) {
     return;
   }
   try {
+    // TMDbは1ページ20件。同名作品が多いと日本の作品が2ページ目以降に回るため、最大3ページまで取得する
+    const fetchPages = async (kind, extra) => {
+      const base = `https://api.themoviedb.org/3/search/${kind}?api_key=${tmdbKey}&query=${encodeURIComponent(q)}&language=ja${extra}`;
+      const get = p => fetch(`${base}&page=${p}`).then(r=>r.json()).catch(()=>({results:[]}));
+      const first = await get(1);
+      const total = Math.min(first.total_pages || 1, 3);
+      const rest = total > 1 ? await Promise.all([...Array(total - 1)].map((_, i) => get(i + 2))) : [];
+      const seen = new Set();
+      const results = [first, ...rest].flatMap(d => d.results || []).filter(r => !seen.has(r.id) && seen.add(r.id));
+      return { results };
+    };
     const [movData, tvData] = await Promise.all([
-      fetch(`https://api.themoviedb.org/3/search/movie?api_key=${tmdbKey}&query=${encodeURIComponent(q)}&language=ja&region=JP`).then(r=>r.json()).catch(()=>({results:[]})),
-      fetch(`https://api.themoviedb.org/3/search/tv?api_key=${tmdbKey}&query=${encodeURIComponent(q)}&language=ja`).then(r=>r.json()).catch(()=>({results:[]}))
+      fetchPages('movie', '&region=JP'),
+      fetchPages('tv', '')
     ]);
     // 日本の作品を優先して並べる（同名の海外作品に埋もれないように）
     const jpFirst = (a, b) => (b.isJp - a.isJp);
