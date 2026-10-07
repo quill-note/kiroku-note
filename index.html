@@ -2242,22 +2242,32 @@ async function searchVideos(q) {
       fetch(`https://api.themoviedb.org/3/search/movie?api_key=${tmdbKey}&query=${encodeURIComponent(q)}&language=ja&region=JP`).then(r=>r.json()).catch(()=>({results:[]})),
       fetch(`https://api.themoviedb.org/3/search/tv?api_key=${tmdbKey}&query=${encodeURIComponent(q)}&language=ja`).then(r=>r.json()).catch(()=>({results:[]}))
     ]);
-    const results = [
-      ...(movData.results||[]).map(r=>({
+    // 日本の作品を優先して並べる（同名の海外作品に埋もれないように）
+    const jpFirst = (a, b) => (b.isJp - a.isJp);
+    const movies = (movData.results||[]).map(r=>({
         title: r.title || r.original_title || '',
         year: r.release_date ? r.release_date.slice(0,4) : '',
         kind: 'movie',
         thumb: r.poster_path ? `https://image.tmdb.org/t/p/w200${r.poster_path}` : '',
-        tmdbId: r.id
-      })),
-      ...(tvData.results||[]).map(r=>({
+        tmdbId: r.id,
+        isJp: r.original_language === 'ja' ? 1 : 0
+      })).filter(r=>r.title).sort(jpFirst);
+    const tvs = (tvData.results||[]).map(r=>({
         title: r.name || r.original_name || '',
         year: r.first_air_date ? r.first_air_date.slice(0,4) : '',
         kind: 'tv',
         thumb: r.poster_path ? `https://image.tmdb.org/t/p/w200${r.poster_path}` : '',
-        tmdbId: r.id
-      }))
-    ].filter(r=>r.title).slice(0,8);
+        tmdbId: r.id,
+        isJp: (r.original_language === 'ja' || (r.origin_country||[]).includes('JP')) ? 1 : 0
+      })).filter(r=>r.title).sort(jpFirst);
+    // 映画とドラマを交互に並べ、どちらかだけで枠が埋まらないようにする
+    const merged = [];
+    for(let i = 0; i < Math.max(movies.length, tvs.length); i++) {
+      if(tvs[i]) merged.push(tvs[i]);
+      if(movies[i]) merged.push(movies[i]);
+    }
+    // 日本作品を最上位に（交互の順は保つ）
+    const results = [...merged.filter(r=>r.isJp), ...merged.filter(r=>!r.isJp)].slice(0,12);
     let apiHTML = '';
     if(!results.length) {
       apiHTML = '<div style="padding:10px;text-align:center;color:var(--text3);font-size:13px">見つかりませんでした</div>';
